@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Voltage Distribution Across String Insulators</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<h1>Voltage Distribution Across String Insulators</h1>
+
+<div id="themeToggleContainer">
+  <label><input type="checkbox" id="themeToggle"> Dark Mode</label>
+</div>
+
+<div style="margin-bottom: 20px;">
+  <label>
+    Number of Discs:
+    <input type="range" id="numDiscs" min="2" max="20" value="5" />
+    <span id="numDiscsValue">5</span>
+  </label>
+  <label>
+    Total Voltage (kV):
+    <input type="range" id="totalVoltage" min="10" max="500" value="100" step="10" />
+    <span id="totalVoltageValue">100</span>
+  </label>
+  <br>
+  <label>
+    Shunt Capacitance Cs (nF):
+    <input type="range" id="cs" min="0.1" max="5" step="0.1" value="0.5" />
+    <span id="csValue">0.5</span>
+  </label>
+  <label>
+    Mutual Capacitance Cm (nF):
+    <input type="range" id="cm" min="0.1" max="5" step="0.1" value="1" />
+    <span id="cmValue">1</span>
+  </label>
+  <br>
+  <button id="playBtn">Play Voltage Flow</button>
+  <br>
+  <button id="resetBtn">Reset</button>
+  <br>
+  <button id="screenshotBtn">📷 Take Screenshot</button>
+
+</div>
+<!-- 
+<div id="simulation-wrapper">
+  <div style="font-weight: bold; margin-right: 15px;">Nearest to Conductor</div>
+  <div id="insulator-string"></div>
+  <div style="font-weight: bold; margin-left: 15px;">Nearest to Tower</div>
+</div>
+<div style="max-width: 600px; margin: 40px auto;">
+  <h3>Voltage Distribution Chart</h3>
+  <canvas id="voltageChart"></canvas>
+</div> -->
+
+  
+
+ <div id="main-layout">
+  <!-- LEFT PANEL: Vertical Discs -->
+  <div id="left-panel">
+    <div style="font-weight: bold; margin-bottom: 10px;">Nearest to Tower</div>
+    <div id="insulator-string"></div>
+    <div style="font-weight: bold; margin-top: 10px;">Nearest to Conductor</div>
+  </div>
+
+  <!-- RIGHT PANEL: Chart -->
+  <div id="right-panel">
+    <div style="max-width: 600px; margin: 40px auto;">
+      <h3>Voltage Distribution Chart</h3>
+      <canvas id="voltageChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div id="quiz-section" style="max-width: 600px; margin: 30px auto; text-align: left; font-size: 14px; border: 1px solid #ccc; padding: 15px; border-radius: 8px;">
+  <h3>Quiz Mode</h3>
+  <p id="quiz-question"></p>
+  <div id="quiz-options"></div>
+  <button id="next-question" style="margin-top: 10px; display:none;">Next Question</button>
+  <p id="quiz-feedback" style="font-weight: bold; margin-top: 15px;"></p>
+</div>
+
+<div id="string-efficiency"></div>
+
+<div id="explanation">
+  <h3>About this Simulation</h3>
+  <p>This simulation models the <strong>voltage distribution</strong> across a string of suspension insulator discs. 
+    The voltage on each disc is affected by the capacitances between discs (mutual capacitance) and between discs and the tower (shunt capacitance).</p>
+  <p>The parameter <em>string efficiency</em> indicates how uniformly the voltage is distributed across the discs. A value close to 100% means near-uniform distribution.</p>
+  <p>Adjust the number of discs, applied voltage, and capacitance values to see how they affect the voltage distribution and string efficiency.</p>
+</div>
+<button id="theoryBtn">📘 View Theory</button>
+
+<div id="theoryModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2>💡 Theory: String Efficiency</h2>
+    <p>
+      String efficiency is defined as:<br>
+      <strong>String Efficiency = (Voltage across the whole string) / (n × Voltage across lowest disc) × 100%</strong><br><br>
+      Ideally, all discs should have equal voltage, but due to shunt capacitance (to tower), the top discs carry more voltage. 
+      Increasing mutual capacitance or grading the discs can improve efficiency.
+    </p>
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="script.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+</body>
+</html>
