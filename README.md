@@ -10,7 +10,7 @@
 
 Fill a brief description of this experiment here
 
-<b>Name of Developer | <b> rajeev Bhaghel 
+<b>Name of Developer | <b> rajeev Baghel 
 :--|:--|
 <b> Institute | <b>  Rajkiya Engineering College Kannauj
 <b> Email id|     <b> rajeev@reck.ac.in 
