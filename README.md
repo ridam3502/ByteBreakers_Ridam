@@ -12,13 +12,15 @@ Fill a brief description of this experiment here
 
 <b>Name of Developer | <b> rajeev Bhaghel 
 :--|:--|
-<b> Institute | <b>  
-<b> Email id|     <b>  
-<b> Department |  
+<b> Institute | <b>  Rajkiya Engineering College Kannauj
+<b> Email id|     <b> rajeev@reck.ac.in 
+<b> Department |  Electronics Engineering
 
 ### Contributors List
 
 SrNo | Name | Faculty or Student | Department| Institute | Email id
 :--|:--|:--|:--|:--|:--|
-1 | . | . | . | . | .
-2 | . | . | . | . | .
+1 | Ridam Sharma | Student | Computer Science |  Rajkiya Engineering College Kannauj | 
+2 | Dhananjay Singh Gaur | Student | Electronics Engineering |  Rajkiya Engineering College Kannauj | .
+3 | Ichha Shukla | Student | Electronics Engineering |  Rajkiya Engineering College Kannauj | .
+4 | Shaili Chauhan| Student | Computer Science |  Rajkiya Engineering College Kannauj | 
