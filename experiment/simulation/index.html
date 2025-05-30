@@ -1,13 +1,334 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<!-- Add CSS at the head of HTML file -->
-    <link rel="stylesheet" href="./css/main.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Insulator Simulation</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-		<!-- Your code goes here-->
+  <div id="themeToggleContainer">
+    <label><input type="checkbox" id="themeToggle" aria-label="Toggle dark mode"> Dark Mode</label>
+  </div>
 
-	<!-- Add JS at the bottom of HTML file --> 
-        <script src="./js/main.js"></script>
+  <div class="container">
+    <div class="tab-buttons">
+      <button class="tab-button active" data-tab="simulationTab" tabindex="0" aria-selected="true" aria-controls="simulationTab">Simulation Guide</button>
+      <button class="tab-button" data-tab="historyTab" tabindex="0" aria-selected="false" aria-controls="historyTab">Experiment History</button>
+      <button class="tab-button" data-tab="analyticsTab" tabindex="0" aria-selected="false" aria-controls="analyticsTab">Analytics Dashboard</button>
+      <button class="tab-button" data-tab="comparisonTab" tabindex="0" aria-selected="false" aria-controls="comparisonTab">Comparison View</button>
+    </div>
+
+    <main class="main-content">
+        <h1>Interactive Insulator Simulation</h1>
+
+        <div id="simulationTab" class="tab-panel active" role="tabpanel">
+            <div class="guidance-panel" id="guidancePanel">
+                <h3 id="stepTitle">Welcome!</h3>
+                <p id="stepInstruction">This guided simulation will walk you through a string insulator experiment. Click "Start Experiment" to begin.</p>
+            </div>
+
+            <div id="stepWelcomeControls" class="step-controls">
+                <button id="startExperimentBtn" class="primary-action-btn" tabindex="0">Start Experiment</button>
+            </div>
+
+            <div id="stepParametersContent" class="hidden-step-content">
+                <div class="control-panel">
+                  <h2>Step 1: Set Parameters</h2>
+                  <div class="input-group">
+                    <label>Number of Discs (n):
+                        <input type="number" id="numDiscs" min="1" max="20" value="5" tabindex="0" aria-label="Number of Discs" />
+                    </label>
+                    <label>Total Voltage (V <span class="unit">kV</span>):
+                        <input type="number" id="totalVoltage" min="10" max="500" value="100" step="10" tabindex="0" aria-label="Total Voltage in kiloVolts" />
+                    </label>
+                    <label>Shunt Cap. Cs (<span class="unit">nF</span>):
+                        <input type="number" id="cs" min="0.01" max="5" step="0.01" value="0.5" tabindex="0" aria-label="Shunt Capacitance in nanoFarads" />
+                    </label>
+                    <label>Mutual Cap. Cm (<span class="unit">nF</span>):
+                        <input type="number" id="cm" min="0.1" max="5" step="0.1" value="1" tabindex="0" aria-label="Mutual Capacitance in nanoFarads" />
+                    </label>
+                    <label>Insulator Material:
+                        <select id="insulatorMaterial" tabindex="0" aria-label="Insulator Material">
+                            <option value="porcelain">Porcelain</option>
+                            <option value="glass">Glass</option>
+                            <option value="composite">Composite</option>
+                        </select>
+                    </label>
+                    <label>Pollution Level:
+                        <select id="pollutionLevel" tabindex="0" aria-label="Pollution Level">
+                            <option value="none">None</option>
+                            <option value="light">Light</option>
+                            <option value="medium">Medium</option>
+                            <option value="heavy">Heavy</option>
+                        </select>
+                    </label>
+                    <label>Humidity (<span class="unit">%</span>):
+                        <input type="number" id="humidity" min="0" max="100" value="50" step="1" tabindex="0" aria-label="Humidity percentage" />
+                    </label>
+                  </div>
+                  <div id="environment-impact-info" style="font-size:0.9em; color:#555; margin-top:10px; padding:5px; border-top:1px dashed #ccc;">
+                    *Environmental factors qualitatively affect efficiency (e.g., pollution/humidity reduce efficiency).
+                  </div>
+                  <button id="toggleDesignModeBtn" class="action-btn" tabindex="0">⚙️ Design Mode</button>
+                  <button id="openFaultSettingsBtn" class="action-btn" tabindex="0">⚡ Advanced Fault Settings</button> <div id="designModeContent" style="display:none;">
+                      <h4>Design Mode: Suggest Number of Discs</h4>
+                      <div class="input-group">
+                          <label>Target System Voltage (<span class="unit">kV</span>): <input type="number" id="targetSystemVoltage" value="100" min="10" max="1000" step="10" tabindex="0" aria-label="Target System Voltage" /></label>
+                          <label>Max Voltage per Disc (<span class="unit">kV</span>): <input type="number" id="maxVoltagePerDisc" value="15" min="1" max="50" step="1" tabindex="0" aria-label="Maximum Voltage per Disc" /></label>
+                      </div>
+                      <button id="calculateDesignBtn" class="action-btn" tabindex="0">Calculate Discs Needed</button>
+                      <p id="designModeResult"></p>
+                  </div>
+                </div>
+                <div class="step-controls">
+                    <button id="paramsToDataDisplayBtn" class="primary-action-btn" tabindex="0">Confirm Parameters & Display Data</button>
+                    <button id="loadDefaultParamsBtn" class="action-btn" tabindex="0">Load Default Values</button>
+                    <button id="saveConfigParamsBtn" class="action-btn" tabindex="0">💾 Save Configuration</button>
+                </div>
+            </div>
+
+            <div id="stepDataDisplayContent" class="hidden-step-content">
+                <div class="control-panel">
+                    <h2>Step 2: Review Entered Data</h2>
+                    <div id="enteredDataDisplay" style="text-align: left; margin-bottom: 15px;">
+                        <p><strong>Number of Discs (n):</strong> <span id="displayNumDiscs"></span></p>
+                        <p><strong>Total Voltage (V):</strong> <span id="displayTotalVoltage"></span> <span class="unit">kV</span></p>
+                        <p><strong>Shunt Capacitance (Cs):</strong> <span id="displayCs"></span> <span class="unit">nF</span></p>
+                        <p><strong>Mutual Capacitance (Cm):</strong> <span id="displayCm"></span> <span class="unit">nF</span></p>
+                        <p><strong>Calculated k (Cs/Cm) Ratio:</strong> <span id="displayKValue"></span></p>
+                        <p><strong>Insulator Material:</strong> <span id="displayInsulatorMaterial"></span></p>
+                        <p><strong>Pollution Level:</strong> <span id="displayPollutionLevel"></span></p>
+                        <p><strong>Humidity:</strong> <span id="displayHumidity"></span> <span class="unit">%</span></p>
+                        <p><strong>Fault Voltage:</strong> <span id="displayFaultVoltage"></span> <span class="unit">kV</span></p>
+                        <p><strong>Fault Duration:</strong> <span id="displayFaultDuration"></span> <span class="unit">ms</span></p>
+                        <p><strong>Faulty Disc Index:</strong> <span id="displayFaultyDiscIndex"></span></p>
+                    </div>
+                </div>
+                <div class="step-controls">
+                    <button id="dataDisplayToTheoryBtn" class="primary-action-btn" tabindex="0">Proceed to Theory</button>
+                </div>
+            </div>
+
+
+            <div id="stepTheoryContent" class="hidden-step-content">
+                <div class="control-panel">
+                    <h2>Step 3: Theoretical Background</h2>
+                    <div id="embeddedTheory">
+                        <p>The voltage across each disc in a string insulator is not uniform due to shunt capacitance (Cs) between metal fittings and the earthed tower, and mutual capacitance (Cm) of each disc.</p>
+                        <p>The disc nearest the line conductor experiences the highest voltage. The distribution depends on the number of discs (n) and the ratio <strong>k = Cs / Cm</strong>.</p>
+                        <p><strong>String Efficiency (<span class="unit">%</span>) = (V<sub>total</sub> / (n * V<sub>disc_max</sub>)) * 100</strong>, where V<sub>disc_max</sub> is the voltage on the most stressed disc.</p>
+                        <button id="showFullTheoryBtn" tabindex="0">📘 Show Full Theory Details</button>
+                    </div>
+                </div>
+                <div class="step-controls">
+                    <button id="theoryToUserCalcBtn" class="primary-action-btn" tabindex="0">Proceed to Self-Calculation</button>
+                </div>
+            </div> 
+
+            <div id="stepUserCalculationContent" class="hidden-step-content">
+                <div class="control-panel">
+                    <h2>Step 4: Your Turn to Calculate!</h2>
+                    <p>Based on the theory and your parameters, try to estimate the voltage across each disc and the string efficiency. Enter your estimates below for Disc 1 (line end) and the overall efficiency. The simulator will guide you.</p>
+                    <div id="userCalculationInputs"></div>
+                    <button id="checkUserCalculationBtn" class="primary-action-btn" tabindex="0">Check My Calculation</button>
+                    <button id="saveUserCalculationBtn" class="action-btn" tabindex="0">💾 Save My Current Input</button>
+                    <div id="userCalculationFeedback" class="user-calc-feedback" role="status" aria-live="polite"></div>
+                </div>
+                <div class="step-controls">
+                    <button id="userCalcToPlotGraphBtn" class="primary-action-btn hidden-step-content" tabindex="0">Plot Graph & View Results</button>
+                    <button id="skipCalculationBtn" class="action-btn" tabindex="0">Skip Calculation</button>
+                </div>
+            </div>
+
+            <div id="stepPlotGraphContent" class="hidden-step-content">
+                <div class="control-panel">
+                    <h2>Step 5: Log Experiment Data</h2>
+                    <p>You've reviewed the theory and tried your hand at calculations. Now, click the button below to log your current experiment's data. After logging, you can view the results, or go to the Analytics Dashboard to compare multiple runs.</p>
+                </div>
+                <div class="step-controls">
+                    <button id="logExperimentBtn" class="primary-action-btn" tabindex="0">Log Experiment & View Results</button>
+                </div>
+            </div>
+
+            <div id="stepResultsContent" class="hidden-step-content">
+                <div class="simulation-display">
+                  <h2>Step 6: Results & Analysis</h2>
+                  <div id="insulator-string-wrapper">
+                    <div style="font-weight: bold; margin-right: 10px; white-space: nowrap;">Tower End</div>
+                    <div id="insulator-string"></div>
+                    <div style="font-weight: bold; margin-left: 10px; white-space: nowrap;">Line End</div>
+                  </div>
+                  <div id="string-efficiency-display">String Efficiency: N/A</div>
+                  
+                  <div class="current-run-data-table" style="margin-top: 20px;">
+                      <h3>Current Run Disc Voltages</h3>
+                      <div style="overflow-x:auto;">
+                          <table id="currentRunDataTable">
+                              <thead>
+                                  <tr>
+                                      <th>Disc No. (from Line End)</th>
+                                      <th>Voltage (kV)</th>
+                                      <th>Status</th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+                                  </tbody>
+                          </table>
+                      </div>
+                  </div>
+
+                  <div class="chart-box" style="margin: 20px auto;"><canvas id="voltageChart"></canvas></div>
+                  <div id="analysisText" style="text-align: left; margin-top:15px; padding:10px; border: 1px dashed #ccc; border-radius: 5px;">
+                    <p><strong>Analysis Prompts:</strong></p>
+                    <ul>
+                        <li>Observe the voltage values on each disc. Which disc has the highest voltage? Is this expected?</li>
+                        <li>What is the string efficiency? What does this value tell you about the uniformity of the voltage distribution?</li>
+                        <li>Consider how the k-value (Cs/Cm) might be influencing these results.</li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="step-controls">
+                    <button id="resultsToVariationBtn" class="primary-action-btn" tabindex="0">Experiment with Variations</button>
+                    <button onclick="switchTab('historyTab')" tabindex="0">Go to Experiment History</button>
+                    <button onclick="switchTab('analyticsTab')" tabindex="0">Go to Analytics</button>
+                    <button id="saveConfigResultsBtn" class="action-btn" tabindex="0">💾 Save Configuration</button>
+                    <button id="toggleVoltageFlowBtn" class="action-btn" tabindex="0">⚡ Toggle Voltage Flow</button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top:15px;">
+                <button id="resetGlobalSimulationBtn" tabindex="0">🔄 Reset Entire Simulation Flow</button>
+                <button id="screenshotBtnGlobal" tabindex="0">📷 Take Screenshot of Current View</button>
+                <button id="printBtnGlobal" tabindex="0">🖨️ Print Current View</button>
+            </div>
+        </div>
+
+        <div id="historyTab" class="tab-panel" role="tabpanel" hidden>
+            <div class="experiment-history-panel">
+              <h2>Experiment History</h2>
+              <input type="text" id="manualNote" placeholder="Add a note for the next saved experiment..." tabindex="0" aria-label="Note for saved experiment">
+              <button id="saveWithNoteBtn" class="action-btn" tabindex="0">💾 Save Current Config with Note</button>
+              <button id="exportCSVBtn" tabindex="0">📄 Export History to CSV</button>
+              <button id="clearHistoryBtn" class="action-btn-delete" tabindex="0">🗑️ Clear All History</button>
+              <div style="overflow-x:auto;">
+                <table id="historyTable" role="grid">
+                  <thead>
+                    <tr>
+                      <th scope="col">ID</th><th scope="col">Timestamp</th><th scope="col">n</th><th scope="col">V (<span class="unit">kV</span>)</th><th scope="col">Cs (<span class="unit">nF</span>)</th><th scope="col">Cm (<span class="unit">nF</span>)</th><th scope="col">k</th>
+                      <th scope="col">Efficiency (<span class="unit">%</span>)</th><th scope="col">Max V (<span class="unit">kV</span>)</th>
+                      <th scope="col">User Eff. (<span class="unit">%</span>)</th><th scope="col">User Disc1 V (<span class="unit">kV</span>)</th>
+                      <th scope="col">Material</th><th scope="col">Pollution</th><th scope="col">Humidity (<span class="unit">%</span>)</th><th scope="col">Fault V (<span class="unit">kV</span>)</th><th scope="col">Fault Dur. (<span class="unit">ms</span>)</th><th scope="col">Faulty Disc</th>
+                      <th scope="col">Notes</th><th scope="col">Actions</th><th scope="col">Compare</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+        </div>
+
+        <div id="analyticsTab" class="tab-panel" role="tabpanel" hidden>
+            <div class="analytics-dashboard">
+              <h2>Analytics Dashboard</h2>
+
+              <div class="control-panel" style="margin-bottom: 20px;">
+                  <h3>Compare Voltage Distributions</h3>
+                  <label for="compareRunsSelect" style="display: block; margin-bottom: 10px;">Select Experiments to Compare:</label>
+                  <select id="compareRunsSelect" multiple size="5" style="width: 100%; max-width: 300px; margin-bottom: 15px; padding: 8px; border-radius: 5px; border: 1px solid #ccc;" aria-label="Select experiments for comparison graph">
+                      </select>
+                  <button id="plotComparisonChartBtn" class="primary-action-btn" tabindex="0">Plot Selected Runs</button>
+                  <div id="comparisonVoltageChart" class="chart-box" style="margin-top: 20px;" role="img" aria-label="Comparative voltage distribution graph"></div>
+              </div>
+
+              <div id="charts-container">
+                <div id="efficiencyVsKGraph" class="chart-box" role="img" aria-label="String Efficiency versus k ratio graph"></div>
+                <div id="voltageTrendsGraph" class="chart-box" role="img" aria-label="Voltage Trends across discs graph"></div>
+                <div id="efficiencyOverTimeGraph" class="chart-box" role="img" aria-label="String Efficiency over time graph"></div>
+                <div id="userVsSystemEfficiencyGraph" class="chart-box" role="img" aria-label="User vs System Efficiency Comparison graph"></div>
+                <div id="userVsSystemDisc1VoltageGraph" class="chart-box" role="img" aria-label="User vs System Disc 1 Voltage Comparison graph"></div>
+              </div>
+               <div id="personalized-feedback" role="status" aria-live="polite">Complete a few experiments to see personalized feedback.</div>
+            </div>
+        </div>
+
+        <div id="comparisonTab" class="tab-panel" role="tabpanel" hidden>
+            <div class="comparison-panel">
+                <h2>Experiment Comparison View</h2>
+                <p>Select up to two experiments from the 'Experiment History' to compare them side-by-side.</p>
+                <div class="comparison-container" id="comparisonContainer">
+                    </div>
+            </div>
+        </div>
+     
+        <div class="explanation" style="margin-top:30px;">
+          <h3>About this Simulation Platform</h3>
+          <p>This platform models voltage distribution across string insulators. Use the 'Simulation Guide' for a step-by-step experiment. Logged data appears in 'Experiment History' and is visualized in 'Analytics Dashboard'.</p>
+          <p><strong>Note:</strong> Data is stored locally in your browser.</p>
+        </div>
+
+        <div id="theoryModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="theoryModalTitle">
+          <div class="modal-content">
+            <span class="close" onclick="document.getElementById('theoryModal').style.display='none'" tabindex="0" role="button" aria-label="Close theory details">&times;</span>
+            <h2 id="theoryModalTitle">💡 Theory: String Insulator Voltages & Efficiency</h2>
+            <p>The voltage across each disc in a string insulator is not uniform due to the presence of shunt capacitance (Cs) between the metal fittings of each disc and the earthed tower, in addition to the mutual capacitance (Cm) of each disc itself.</p>
+            <p>The disc nearest to the line conductor experiences the highest voltage. The distribution depends on the number of discs (n) and the ratio k = Cs / Cm.</p>
+            <p>A common formula for the voltage V<sub>i</sub> across the i-th disc (from the line end, i=1 being line end) is derived based on current distribution through the capacitive network. One such approach gives:</p>
+            <p>$$V_i = V_{\text{total}} \times \frac{(1+k)^{n-i}}{\sum_{j=0}^{n-1} (1+k)^j}$$</p>
+            <p>where the denominator is the sum of a geometric series.</p>
+            <p><strong>String Efficiency</strong> is defined as:</p>
+            <p>$$\text{Efficiency (\%)} = \left( \frac{V_{\text{total}}}{n \times V_{\text{disc\_max}}} \right) \times 100$$</p>
+            <p>where $V_{\text{disc\_max}}$ is the voltage across the disc experiencing the maximum voltage (usually the one nearest to the line conductor).</p>
+            <p>A higher string efficiency (closer to 100%) indicates a more uniform voltage distribution and better utilization of the insulator string.</p>
+          </div>
+        </div>
+
+        <div id="discPropertiesModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="discPropertiesModalTitle">
+            <div class="modal-content">
+                <span class="close" onclick="document.getElementById('discPropertiesModal').style.display='none'" tabindex="0" role="button" aria-label="Close disc properties">&times;</span>
+                <h2 id="discPropertiesModalTitle">Disc Properties: <span id="modalDiscIndex"></span></h2>
+                <p>Voltage: <span id="modalDiscVoltage"></span> <span class="unit">kV</span></p>
+                <label>
+                    <input type="checkbox" id="isPuncturedCheckbox" tabindex="0" aria-label="Mark disc as punctured"> Punctured (Disc is electrically ineffective)
+                </label>
+                <button id="saveDiscPropertiesBtn" class="primary-action-btn" tabindex="0">Save Changes</button>
+            </div>
+        </div>
+
+        <div id="faultSettingsModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="faultSettingsModalTitle">
+            <div class="modal-content">
+                <span class="close" onclick="document.getElementById('faultSettingsModal').style.display='none'" tabindex="0" role="button" aria-label="Close fault settings">&times;</span>
+                <h2 id="faultSettingsModalTitle">⚡ Advanced Fault Settings</h2>
+                <p>Configure parameters for simulating fault conditions on the insulator string.</p>
+                <div class="input-group">
+                    <label>Fault Voltage (<span class="unit">kV</span>):
+                        <input type="number" id="modalFaultVoltage" min="0" max="1000" value="0" step="10" tabindex="0" aria-label="Fault Voltage in kiloVolts" />
+                    </label>
+                    <label>Fault Duration (<span class="unit">ms</span>):
+                        <input type="number" id="modalFaultDuration" min="0" max="5000" value="0" step="100" tabindex="0" aria-label="Fault Duration in milliseconds" />
+                    </label>
+                    <label>Faulty Disc Index:
+                        <input type="number" id="modalFaultyDiscIndex" min="0" max="20" value="0" tabindex="0" aria-label="Index of faulty disc" />
+                    </label>
+                </div>
+                <button id="saveFaultSettingsBtn" class="primary-action-btn" tabindex="0">Save Fault Settings</button>
+                <button onclick="document.getElementById('faultSettingsModal').style.display='none'" class="action-btn" tabindex="0">Cancel</button>
+            </div>
+        </div>
+
+        <div id="loadingIndicator" style="display: none;">
+            <div class="spinner"></div>
+            <p>Calculating...</p>
+        </div>
+    </main>
+  </div>
+
+
+  <!-- Entire body content goes here (copied from your current HTML) -->
+
+  <script src="script.js"></script>
 </body>
 </html>

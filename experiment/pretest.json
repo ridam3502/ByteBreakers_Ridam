@@ -2,37 +2,37 @@
   "version": 2.0,
   "questions": [
     {
-      "question": "This is a Sample Question 1?",
+      "question": "What is the primary function of suspension insulators?",
       "answers": {
-        "a": "answer1",
-        "b": "answer2",
-        "c": "answer3",
-        "d": "answer4"
+        "a": "To measure voltage in a circuit",
+        "b": "To conduct electricity between towers",
+        "c": "To provide mechanical support and electrical insulation",
+        "d": "To convert AC to DC"
       },
       "explanations": {
-        "a": "Explanation 1  <a href='www.google.com'>here</a>",
-        "b": "Explanation 2",
-        "c": "Explanation 2",
-        "d": "Explanation 2"
+        "a": "Incorrect – they do not measure voltage.",
+        "b": "Incorrect – they insulate, not conduct.",
+        "c": "Correct – their role is both mechanical and electrical.",
+        "d": "Incorrect – not a rectifier."
       },
-      "correctAnswer": "a",
+      "correctAnswer": "c",
       "difficulty": "beginner"
     },
     {
-      "question": "This is a Sample Question 2?",
+      "question": "What causes non-uniform voltage distribution in insulator strings?",
       "answers": {
-        "a": "answer1",
-        "b": "answer2",
-        "c": "answer3",
-        "d": "answer4"
+        "a": "Corona discharge",
+        "b": "Parasitic capacitances",
+        "c": "Resistance of conductors",
+        "d": "Thermal effects"
       },
       "explanations": {
-        "a": "Explanation 1  <a href='www.google.com'>here</a>",
-        "b": "Explanation 2",
-        "c": "Explanation 2",
-        "d": "Explanation 2"
+        "a": "Incorrect – not the main cause.",
+        "b": "Correct – due to mutual and stray capacitance.",
+        "c": "Incorrect – resistance is negligible.",
+        "d": "Incorrect – thermal effects are minor."
       },
-      "correctAnswer": "c",
+      "correctAnswer": "b",
       "difficulty": "beginner"
     }
   ]

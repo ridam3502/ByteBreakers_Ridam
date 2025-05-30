@@ -1,70 +1,66 @@
-1. Introduction
-In high-voltage transmission lines, pin-type and suspension-type insulators are used to mechanically support the conductor and provide electrical insulation from the transmission tower. When using suspension insulators, multiple disc-shaped insulators are connected in series to form an insulator string. Ideally, the voltage across each disc should be uniform, but in practice, due to capacitive effects, the voltage distribution is non-uniform — the disc nearest to the conductor experiences the maximum voltage stress.
+### 1. Introduction
+In high-voltage power systems, suspension insulators are commonly used to support overhead conductors and electrically isolate them from transmission towers. These insulators are made up of a string of porcelain or composite discs connected in series.
 
-Understanding and analyzing the voltage distribution is crucial for:
+Ideally, the applied voltage should divide equally across all discs, but in reality, due to the presence of stray and mutual capacitances, the voltage distribution is uneven. This causes the disc closest to the conductor to experience the highest voltage stress, potentially leading to premature failure.
 
-Designing safe and reliable insulator strings.
+---
 
-Preventing premature failure due to overvoltage stress.
+### 2. Causes of Uneven Voltage Distribution
 
-Improving the string efficiency.
+- **Stray Capacitance (C<sub>t</sub>):** Capacitance between each disc and the tower.
+- **Mutual Capacitance (C<sub>d</sub>):** Capacitance between adjacent discs.
 
-2. Causes of Uneven Voltage Distribution
-The main cause of non-uniform voltage distribution is the presence of stray capacitances:
+Due to these parasitic effects, the voltage is not uniformly distributed, with the bottom disc experiencing the highest voltage.
 
-Capacitance between each disc and the tower (C<sub>t</sub>).
+---
 
-Capacitance between adjacent discs (C<sub>d</sub>) — also known as mutual capacitance.
+### 3. Mathematical Modeling
 
-These parasitic capacitances cause the potential drop to be higher across the lower discs (closer to the conductor).
-  4. Mathematical Expression
 Let:
+- \( V \) = Total voltage across the string
+- \( n \) = Number of discs
+- \( \alpha = \frac{C_t}{C_d} \)
 
-n be the number of discs,
+#### For 3 discs:
 
-V be the total voltage across the string,
+\[
+V_3 = \frac{V}{1 + \alpha + \alpha(1 + \alpha)}
+\]
+\[
+V_2 = \alpha \cdot V_3
+\]
+\[
+V_1 = \alpha(1 + \alpha) \cdot V_3
+\]
 
+#### General formula for \( i^{th} \) disc:
+\[
+V_i = V \cdot \frac{(1 + \alpha)^{n-i}}{\sum_{k=1}^{n} (1 + \alpha)^{n-k}}
+\]
 
-5.Voltage across each disc (for 3 discs):
-Using nodal analysis or equivalent circuit simplification, we can derive:
+---
 
-V₃ = V / (1 + α + α(1 + α))
+### 4. String Efficiency
 
-V₂ = α × V₃
+String Efficiency (\( \eta \)) is defined as:
+\[
+\eta = \left( \frac{V}{n \cdot V_{\text{max}}} \right) \times 100
+\]
 
-V₁ = α(1 + α) × V₃
+Where:
+- \( V \) = Total voltage across the string
+- \( V_{\text{max}} \) = Maximum voltage across a single disc (typically the bottom one)
 
-6.General formula (for any n):
- Voltage Across i-th Disc (Simple Formula)
-Let:
+---
 
-V = total voltage across the string
+### 5. Methods to Improve Voltage Distribution
 
-α = ratio of tower-to-disc capacitance to disc-to-disc capacitance
+- **Capacitive grading:** Use of grading or corona rings
+- **Increasing α:** Reduce stray capacitance by increasing disc spacing
+- **Using better design materials:** Composite insulators with built-in grading features
 
-n = total number of discs
+---
 
-i = disc number (counted from top to bottom, i = 1 to n
-V_i = V × (1 + α)^(n - i) / Σ[(1 + α)^(n - k)]  for k = 1 to n
+### 6. Conclusion
 
-6. String Efficiency
-
-String efficiency (η) is defined as
-V = total voltage across the insulator string
-
-n = number of discs
-
-V_max = voltage across the disc with the highest voltage (usually the bottom disc)
-
-Then String Efficiency (%) = (V / (n × V_max)) × 100
-
-7. Methods to Improve Voltage Distribution
-Capacitive grading: Using additional metal rings to redistribute voltage.
-
-Increasing α: Reducing tower-to-disc capacitance (by increasing spacing).
-
-Using insulators with built-in grading
-
-8. Conclusion:
-   
-Voltage distribution across insulator strings is inherently non-uniform due to stray capacitances. The disc nearest the conductor experiences the highest voltage stress, which can lead to flashover or failure. Understanding the distribution pattern using equivalent circuits and mathematical modeling helps in design optimization and increasing string efficiency. Techniques like grading rings and improved material design can help achieve more uniform distribution, ensuring the safety and durability of high-voltage transmission lines.
+Voltage distribution across suspension insulator strings is inherently non-uniform due to capacitive effects. Analyzing this distribution is critical for enhancing safety, reducing failure risks, and improving the efficiency and longevity of the transmission system. Engineering solutions like grading rings and optimized material designs play a vital role in improving performance.

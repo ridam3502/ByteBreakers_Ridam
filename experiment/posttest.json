@@ -2,35 +2,35 @@
   "version": 2.0,
   "questions": [
     {
-      "question": "This is a Sample Question 1?",
+      "question": "In a 3-disc insulator string, which disc typically experiences the highest voltage?",
       "answers": {
-        "a": "answer1",
-        "b": "answer2",
-        "c": "answer3",
-        "d": "answer4"
+        "a": "Top disc",
+        "b": "Middle disc",
+        "c": "Bottom disc",
+        "d": "All equally"
       },
       "explanations": {
-        "a": "Explanation 1  <a href='www.google.com'>here</a>",
-        "b": "Explanation 2",
-        "c": "Explanation 2",
-        "d": "Explanation 2"
+        "a": "Incorrect – not exposed to maximum stress.",
+        "b": "Incorrect – middle disc is intermediate.",
+        "c": "Correct – closest to the conductor.",
+        "d": "Incorrect – voltage is not equally distributed."
       },
-      "correctAnswer": "a",
+      "correctAnswer": "c",
       "difficulty": "beginner"
     },
     {
-      "question": "This is a Sample Question 2?",
+      "question": "How can string efficiency be improved?",
       "answers": {
-        "a": "answer1",
-        "b": "answer2",
-        "c": "answer3",
-        "d": "answer4"
+        "a": "By using more conductor material",
+        "b": "By reducing system voltage",
+        "c": "By installing grading rings",
+        "d": "By shortening insulator strings"
       },
       "explanations": {
-        "a": "Explanation 1  <a href='www.google.com'>here</a>",
-        "b": "Explanation 2",
-        "c": "Explanation 2",
-        "d": "Explanation 2"
+        "a": "Incorrect – unrelated to efficiency.",
+        "b": "Incorrect – not effective.",
+        "c": "Correct – grading rings help redistribute voltage.",
+        "d": "Incorrect – may reduce performance."
       },
       "correctAnswer": "c",
       "difficulty": "beginner"
