@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Insulator Simulation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Base styles for the body, with a fixed light background and dark text for high contrast */
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f7fafc; /* Light background */
+        color: #1a202c; /* Very dark text for high contrast */
+    }
+    /* Ensure specific elements maintain dark text on light backgrounds */
+    .bg-white {
+        background-color: #ffffff;
+    }
+    .text-gray-800 {
+        color: #1a202c; /* Ensure this is also very dark */
+    }
+    .border-gray-300 {
+        border-color: #e2e8f0;
+    }
+    input, select {
+        background-color: #ffffff;
+        color: #1a202c;
+        border-color: #e2e8f0;
+    }
+    /* Styling for buttons not explicitly styled otherwise */
+    button:not(.action-btn-delete):not(.primary-action-btn) {
+        background-color: #4299e1; /* Blue button background */
+        color: white;
+    }
+    button:not(.action-btn-delete):not(.primary-action-btn):hover {
+        background-color: #3182ce; /* Darker blue on hover */
+    }
+    .shadow-lg {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Standard shadow */
+    }
+
+    /* Loading overlay styles */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        color: white;
+        font-size: 1.5rem;
+        flex-direction: column;
+    }
+    .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid #fff;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Custom modal styles */
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed;
+        z-index: 1001;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4); /* Semi-transparent background */
+        justify-content: center; /* Center horizontally */
+        align-items: center; /* Center vertically */
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 500px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        text-align: center;
+        color: #1a202c; /* Dark text for modal content */
+    }
+    .modal-close-button {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .modal-close-button:hover,
+    .modal-close-button:focus {
+        color: #000;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    /* Specific styles for tabs and step content */
+    .tab-button.active {
+        background-color: #cbd5e0; /* Light gray for active tab */
+        border-bottom: 2px solid #3b82f6; /* Blue indicator */
+    }
+    .hidden-step-content {
+        display: none !important; /* Hide content for inactive steps */
+    }
+    /* Feedback message styling for user calculations */
+    .user-calc-feedback.correct {
+        color: #2ecc71; /* Green for correct feedback */
+    }
+    .user-calc-feedback.incorrect {
+        color: #e74c3c; /* Red for incorrect feedback */
+    }
+    /* General action button styling */
+    .action-btn {
+        background-color: #3b82f6;
+        color: white;
+    }
+    .action-btn:hover {
+        background-color: #2563eb;
+    }
+    /* Delete action button styling */
+    .action-btn-delete {
+        background-color: #ef4444;
+        color: white;
+    }
+    .action-btn-delete:hover {
+        background-color: #dc2626;
+    }
+    /* Table styling */
+    table th, table td {
+        padding: 8px;
+        border: 1px solid #e2e8f0;
+        text-align: left;
+        color: #1a202c; /* Dark text for table content */
+    }
+    table th {
+        background-color: #edf2f7;
+    }
+    /* Guidance panel styling */
+    .guidance-panel {
+        border-left: 5px solid #3b82f6;
+        background-color: #e0f2fe;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+        color: #1a202c; /* Dark text for guidance panel */
+    }
+    /* Comparison item styling */
+    .comparison-item {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        background-color: #ffffff; /* Ensure light background */
+        color: #1a202c; /* Dark text for comparison item */
+    }
+
+    /* Insulator specific styles */
+    #insulator-string-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 20px 0;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        min-height: 150px;
+        flex-wrap: wrap; /* Allow wrapping for smaller screens */
+    }
+
+    #insulator-string {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        flex-wrap: nowrap;
+        overflow-x: auto; /* Allow horizontal scrolling for many discs */
+        padding: 10px 0;
+    }
+
+    .disc {
+        width: 60px; /* Increased width for better visibility */
+        height: 100px; /* Increased height for better visibility */
+        border-radius: 10px; /* More rounded corners */
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* Stronger shadow */
+        color: white; /* Default text color for discs */
+        font-weight: bold;
+        font-size: 0.8em; /* Slightly larger font */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        user-select: none; /* Prevent text selection */
+        background: linear-gradient(145deg, #3498db, #2980b9); /* Default Gradient background (blue) */
+        border: 2px solid #ffffff; /* White border for definition */
+        box-sizing: border-box;
+        flex-shrink: 0; /* Prevent discs from shrinking */
+        cursor: pointer; /* Make discs clickable */
+        transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    .disc:hover {
+        transform: scale(1.05); /* Slight scale up on hover */
+    }
+    /* Style for fault/damaged disc */
+    .disc.faulty {
+        background: linear-gradient(145deg, #e74c3c, #c0392b) !important; /* Red for fault, !important to override dynamic color */
+        animation: spark 0.5s infinite alternate; /* Sparking animation */
+        box-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+    }
+    @keyframes spark {
+        from { box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); }
+        to { box-shadow: 0 0 20px rgba(255, 100, 100, 1); }
+    }
+    /* Style for punctured disc */
+    .disc.punctured {
+        background: linear-gradient(145deg, #7f8c8d, #34495e) !important; /* Grey/Dark for punctured */
+        color: #bdc3c7;
+        text-decoration: line-through;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    /* Voltage Flow Animation */
+    @keyframes voltage-pulse {
+        0% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.4); }
+        50% { box-shadow: 0 0 15px rgba(255, 255, 255, 0.8); }
+        100% { box-shadow: 0 0 5px rgba(255, 255, 255, 0.4); }
+    }
+    .disc.voltage-flow-active {
+        animation-name: voltage-pulse;
+        animation-iteration-count: infinite;
+        animation-timing-function: ease-in-out;
+    }
+
+    /* Connector SVG styles */
+    .connector-svg {
+        width: 20px;
+        height: 100px; /* Adjusted height for larger discs */
+        overflow: visible;
+    }
+    .connector-path {
+        stroke: #aaa;
+        stroke-width: 2;
+        fill: none;
+    }
+
+    /* Styles for discs in comparison view */
+    .comparison-disc-string {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 10px auto;
+        border: 1px dashed #ccc;
+        padding: 5px;
+        border-radius: 5px;
+        max-width: 200px; /* Constrain width for comparison */
+    }
+    .comparison-disc-string .disc {
+        width: 40px;
+        height: 70px;
+        font-size: 0.7em;
+    }
+    .comparison-disc-string .connector-svg {
+        height: 70px;
+    }
+
+    /* Design mode section styling */
+    #designModeContent {
+        padding: 15px;
+        border: 1px dashed #ccc;
+        border-radius: 5px;
+        margin-top: 15px;
+        background-color: #f9f9f9;
+    }
+    #designModeContent h4 {
+        margin-top: 0;
+        color: #2c3e50;
+    }
+    #designModeResult {
+        margin-top: 10px;
+        font-weight: bold;
+        color: #27ae60;
+    }
+
+    /* Personalized feedback styling */
+    #personalizedFeedback {
+        margin-top: 15px;
+        padding: 10px;
+        background-color: #e6f7ff;
+        border: 1px solid #91d5ff;
+        border-radius: 44px; /* Rounded corners for the feedback box */
+        font-style: italic;
+        color: #1a202c; /* Dark text for feedback */
+    }
+
+    /* Current run data table styling */
+    .current-run-data-table {
+        margin-top: 20px;
+    }
+    .current-run-data-table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .current-run-data-table th, .current-run-data-table td {
+        border: 1px solid #e2e8f0;
+        padding: 8px;
+        text-align: left;
+        color: #1a202c; /* Dark text for table content */
+    }
+    table th {
+        background-color: #edf2f7;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex flex-col items-center p-4 min-h-screen">
+
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p>Calculating...</p>
+    </div>
+
+    <div id="customAlertModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-button" onclick="document.getElementById('customAlertModal').style.display='none'">&times;</span>
+            <p id="customAlertMessage" class="text-lg my-4"></p>
+            <button onclick="document.getElementById('customAlertModal').style.display='none'" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">OK</button>
+        </div>
+    </div>
+
+    <div id="customConfirmModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-button" onclick="document.getElementById('customConfirmModal').style.display='none'">&times;</span>
+            <p id="customConfirmMessage" class="text-lg my-4"></p>
+            <div class="flex justify-center space-x-4">
+                <button id="confirmYesBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">Yes</button>
+                <button onclick="document.getElementById('customConfirmModal').style.display='none'" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md">No</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="discPropertiesModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-button" onclick="document.getElementById('discPropertiesModal').style.display='none'">&times;</span>
+            <h2 id="discPropertiesModalTitle" class="text-xl font-bold mb-4">Disc Properties: <span id="modalDiscIndex"></span></h2>
+            <p class="text-lg mb-4">Voltage: <span id="modalDiscVoltage"></span> kV</p>
+            <label class="flex items-center justify-center space-x-2 mb-4">
+                <input type="checkbox" id="isPuncturedCheckbox" class="form-checkbox h-5 w-5 text-blue-600 rounded">
+                <span class="text-gray-700">Punctured (Disc is electrically ineffective)</span>
+            </label>
+            <button id="saveDiscPropertiesBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">Save Changes</button>
+        </div>
+    </div>
+
+    <div id="faultSettingsModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-button" onclick="document.getElementById('faultSettingsModal').style.display='none'">&times;</span>
+            <h2 id="faultSettingsModalTitle" class="text-xl font-bold mb-4">⚡ Advanced Fault Settings</h2>
+            <p class="text-gray-700 mb-4">Configure parameters for simulating fault conditions on the insulator string.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="flex flex-col">
+                    <label for="modalFaultVoltage" class="text-sm font-medium text-gray-700 mb-1">Fault Voltage (kV):</label>
+                    <input type="number" id="modalFaultVoltage" min="0" max="1000" value="0" step="10" class="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex flex-col">
+                    <label for="modalFaultDuration" class="text-sm font-medium text-gray-700 mb-1">Fault Duration (ms):</label>
+                    <input type="number" id="modalFaultDuration" min="0" max="5000" value="0" step="100" class="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex flex-col md:col-span-2">
+                    <label for="modalFaultyDiscIndex" class="text-sm font-medium text-gray-700 mb-1">Faulty Disc Index (1-based from line end, 0 for none):</label>
+                    <input type="number" id="modalFaultyDiscIndex" min="0" max="20" value="0" class="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            <div class="flex justify-center space-x-4">
+                <button id="saveFaultSettingsBtn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md">Save Fault Settings</button>
+                <button onclick="document.getElementById('faultSettingsModal').style.display='none'" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container max-w-5xl w-full bg-white p-8 rounded-lg shadow-lg mb-8">
+        <h1 class="text-3xl font-bold text-center mb-6 text-blue-700">Interactive Insulator Simulation</h1>
+
+        <div class="guidance-panel">
+            <h3 id="insulatorStepTitle" class="text-xl font-semibold text-blue-700 mb-2">Welcome!</h3>
+            <p id="insulatorStepInstruction" class="text-gray-700">This simulation allows you to study voltage distribution across an insulator string. Adjust parameters and observe the voltage across each disc and the string efficiency.</p>
+        </div>
+
+        <div id="insulatorParametersContent" class="step-content">
+            <h2 class="text-2xl font-bold text-center mb-4 text-blue-700">Set Insulator Parameters</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="flex flex-col">
+                    <label for="insulatorNumDiscs" class="text-sm font-medium text-gray-700 mb-1">Number of Discs (n):</label>
+                    <input type="number" id="insulatorNumDiscs" value="5" min="1" max="20" class="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex flex-col">
+                    <label for="insulatorTotalVoltage" class="text-sm font-medium text-gray-700 mb-1">Total Voltage (kV):</label>
+                    <input type="number" id="insulatorTotalVoltage" value="100" min="10" max="500" step="10" class="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex flex-col">
+                    <label for="insulatorCs" class="text-sm font-medium text-gray-700 mb-1">Shunt Cap. Cs (nF):</label>
+                    <input type="number" id="insulatorCs" value="0.5" step="0.01" min="0.01" max="5" class="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex flex-col">
+                    <label for="insulatorCm" class="text-sm font-medium text-gray-700 mb-1">Mutual Cap. Cm (nF):</label>
+                    <input type="number" id="insulatorCm" value="1.0" step="0.1" min="0.1" max="5" class="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                 <div class="flex flex-col">
+                    <label for="insulatorMaterial" class="text-sm font-medium text-gray-700 mb-1">Insulator Material:</label>
+                    <select id="insulatorMaterial" class="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        <option value="porcelain">Porcelain</option>
+                        <option value="glass">Glass</option>
+                        <option value="composite">Composite</option>
+                    </select>
+                </div>
+                <div class="flex flex-col">
+                    <label for="pollutionLevel" class="text-sm font-medium text-gray-700 mb-1">Pollution Level:</label>
+                    <select id="pollutionLevel" class="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                        <option value="none">None</option>
+                        <option value="light">Light</option>
+                        <option value="medium">Medium</option>
+                        <option value="heavy">Heavy</option>
+                    </select>
+                </div>
+                <div class="flex flex-col md:col-span-2">
+                    <label for="humidity" class="text-sm font-medium text-gray-700 mb-1">Humidity (%):</label>
+                    <input type="number" id="humidity" value="50" min="0" max="100" step="1" class="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                </div>
+            </div>
+            <div class="flex justify-center space-x-4 mt-6">
+                <button id="insulatorCalculateBtn" class="action-btn py-2 px-6 rounded-md shadow-md transition duration-300 ease-in-out">Calculate Voltage Distribution</button>
+                <button id="insulatorLoadDefaultParamsBtn" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-md shadow-md transition duration-300 ease-in-out">Load Default</button>
+                <button id="openFaultSettingsBtn" class="action-btn py-2 px-6 rounded-md shadow-md transition duration-300 ease-in-out">⚡ Advanced Fault Settings</button>
+            </div>
+            <div id="designModeContent" class="mt-8 p-4 border border-gray-300 rounded-md hidden">
+                <h4 class="text-xl font-semibold text-blue-700 mb-4">Design Mode: Suggest Number of Discs</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="flex flex-col">
+                        <label for="targetSystemVoltage" class="text-sm font-medium text-gray-700 mb-1">Target System Voltage (kV):</label>
+                        <input type="number" id="targetSystemVoltage" value="100" min="10" max="1000" step="10" class="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="flex flex-col">
+                        <label for="maxVoltagePerDisc" class="text-sm font-medium text-gray-700 mb-1">Max Voltage per Disc (kV):</label>
+                        <input type="number" id="maxVoltagePerDisc" value="15" min="1" max="50" step="1" class="p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+                <button id="calculateDesignBtn" class="action-btn py-2 px-6 rounded-md shadow-md transition duration-300 ease-in-out">Calculate Discs Needed</button>
+                <p id="designModeResult" class="font-bold text-lg mt-4"></p>
+            </div>
+            <button id="toggleDesignModeBtn" class="action-btn py-2 px-6 rounded-md shadow-md transition duration-300 ease-in-out mt-4">⚙️ Design Mode</button>
+        </div>
+
+        <div id="insulatorResultsContent" class="step-content">
+            <h2 class="text-2xl font-bold text-center mb-4 text-blue-700">Insulator Results & Analysis</h2>
+            <div id="insulator-string-wrapper" class="flex flex-col items-center mt-8 p-4 border border-gray-300 rounded-md">
+                <h3 class="text-xl font-semibold text-blue-700 mb-4">Insulator String Visualisation</h3>
+                <div class="flex justify-center items-center gap-2">
+                    <div style="font-weight: bold; margin-right: 10px; white-space: nowrap; color: inherit;">Tower End</div>
+                    <div id="insulator-string" class="flex justify-center items-center gap-2 overflow-x-auto p-2">
+                        </div>
+                    <div style="font-weight: bold; margin-left: 10px; white-space: nowrap; color: inherit;">Line End</div>
+                </div>
+                <p id="insulator-efficiency-display" class="font-bold text-lg text-green-600 mt-4">String Efficiency: N/A</p>
+            </div>
+
+            <div class="current-run-data-table" style="margin-top: 20px;">
+                <h3 class="text-xl font-semibold text-blue-700 mb-2">Current Run Disc Voltages</h3>
+                <div style="overflow-x:auto;">
+                    <table id="currentRunDataTable" class="min-w-full bg-white rounded-md shadow-md">
+                        <thead>
+                            <tr>
+                                <th>Disc No. (from Line End)</th>
+                                <th>Voltage (kV)</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="insulatorVoltageChart" class="mt-8 p-4 border border-gray-300 rounded-md" style="height: 350px;"></div>
+
+            <div class="flex justify-center space-x-4 mt-6">
+                <button id="insulatorSaveExperimentBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-md shadow-md transition duration-300 ease-in-out">
+                    💾 Save Experiment
+                </button>
+                <button id="toggleVoltageFlowBtn" class="action-btn py-2 px-6 rounded-md shadow-md transition duration-300 ease-in-out">⚡ Toggle Voltage Flow</button>
+            </div>
+        </div>
+
+        <div id="experimentHistory" class="tab-panel hidden">
+            <h2 class="text-2xl font-bold text-center mb-4 text-blue-700">Experiment History</h2>
+            <div class="flex justify-center space-x-4 mb-4">
+                <input type="text" id="historyNoteInput" placeholder="Add a note for the next saved experiment..." class="p-2 border border-gray-300 rounded-md w-full max-w-md">
+                <button id="saveWithNoteBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md">Save Current Config</button>
+            </div>
+            <div class="flex justify-center space-x-4 mb-6">
+                <button id="exportCsvBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-md">Export to CSV</button>
+                <button id="clearHistoryBtn" class="action-btn-delete py-2 px-4 rounded-md">Clear All History</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table id="historyTable" class="min-w-full bg-white rounded-md shadow-md">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Type</th>
+                            <th>Timestamp</th>
+                            <th>Num Discs</th>
+                            <th>Total Voltage (kV)</th>
+                            <th>Cs (nF)</th>
+                            <th>Cm (nF)</th>
+                            <th>k (Cs/Cm)</th>
+                            <th>Efficiency (%)</th>
+                            <th>Max Disc V (kV)</th>
+                            <th>Material</th>
+                            <th>Pollution</th>
+                            <th>Humidity (%)</th>
+                            <th>Fault V (kV)</th>
+                            <th>Fault Dur (ms)</th>
+                            <th>Faulty Disc</th>
+                            <th>Punctured Discs</th>
+                            <th>Note</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="analyticsDashboard" class="tab-panel hidden">
+            <h2 class="text-2xl font-bold text-center mb-4 text-blue-700">Analytics Dashboard</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div id="efficiencyOverTimeGraph" class="w-full h-80 bg-gray-50 rounded-md shadow-inner"></div>
+                <div id="efficiencyVsKGraph" class="w-full h-80 bg-gray-50 rounded-md shadow-inner"></div>
+            </div>
+            <div id="personalizedFeedback" class="mt-8 p-4 bg-blue-100 text-blue-800 rounded-md">
+                Complete a few experiments to see personalized feedback.
+            </div>
+        </div>
+
+        <div class="flex justify-center space-x-4 mt-10 pt-6 border-t border-gray-200">
+            <button id="toggleVoiceInstructionsBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-md shadow-md transition duration-300 ease-in-out">
+                🔊 Toggle Voice Instructions
+            </button>
+            <button id="screenshotBtnGlobal" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-md shadow-md transition duration-300 ease-in-out">
+                📷 Take Screenshot
+            </button>
+            <button id="printBtnGlobal" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-md shadow-md transition duration-300 ease-in-out">
+                🖨️ Print Current View
+            </button>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // --- DOM Element References ---
+        const insulatorNumDiscsInput = document.getElementById('insulatorNumDiscs');
+        const insulatorTotalVoltageInput = document.getElementById('insulatorTotalVoltage');
+        const insulatorCsInput = document.getElementById('insulatorCs');
+        const insulatorCmInput = document.getElementById('insulatorCm');
+        const insulatorMaterialSelect = document.getElementById('insulatorMaterial');
+        const pollutionLevelSelect = document.getElementById('pollutionLevel');
+        const humidityInput = document.getElementById('humidity');
+
+        const insulatorStringDiv = document.getElementById('insulator-string');
+        const insulatorEfficiencyDisplay = document.getElementById('insulator-efficiency-display');
+        const insulatorVoltageChartDiv = document.getElementById('insulatorVoltageChart');
+        const currentRunDataTableBody = document.querySelector('#currentRunDataTable tbody');
+
+        const customAlertModal = document.getElementById('customAlertModal');
+        const customAlertMessage = document.getElementById('customAlertMessage');
+        const customConfirmModal = document.getElementById('customConfirmModal');
+        const customConfirmMessage = document.getElementById('customConfirmMessage');
+        const confirmYesBtn = document.getElementById('confirmYesBtn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        // Insulator Design Mode elements
+        const toggleDesignModeBtn = document.getElementById('toggleDesignModeBtn');
+        const designModeContent = document.getElementById('designModeContent');
+        const targetSystemVoltageInput = document.getElementById('targetSystemVoltage');
+        const maxVoltagePerDiscInput = document.getElementById('maxVoltagePerDisc');
+        const calculateDesignBtn = document.getElementById('calculateDesignBtn');
+        const designModeResult = document.getElementById('designModeResult');
+
+        // Insulator Fault Settings elements
+        const faultSettingsModal = document.getElementById('faultSettingsModal');
+        const openFaultSettingsBtn = document.getElementById('openFaultSettingsBtn');
+        const saveFaultSettingsBtn = document.getElementById('saveFaultSettingsBtn');
+        const modalFaultVoltageInput = document.getElementById('modalFaultVoltage');
+        const modalFaultDurationInput = document.getElementById('modalFaultDuration');
+        const modalFaultyDiscIndexInput = document.getElementById('modalFaultyDiscIndex');
+
+        // Insulator Disc Properties elements
+        const discPropertiesModal = document.getElementById('discPropertiesModal');
+        const saveDiscPropertiesBtn = document.getElementById('saveDiscPropertiesBtn');
+        const isPuncturedCheckbox = document.getElementById('isPuncturedCheckbox');
+        const modalDiscIndexSpan = document.getElementById('modalDiscIndex');
+        const modalDiscVoltageSpan = document.getElementById('modalDiscVoltage');
+
+        // Insulator Voltage Flow Animation element
+        const toggleVoltageFlowBtn = document.getElementById('toggleVoltageFlowBtn');
+
+        // History and Analytics elements
+        const historyTableBody = document.querySelector('#historyTable tbody');
+        const historyNoteInput = document.getElementById('historyNoteInput');
+        const personalizedFeedbackEl = document.getElementById('personalizedFeedback');
+        const efficiencyOverTimeGraphDiv = document.getElementById('efficiencyOverTimeGraph');
+        const efficiencyVsKGraphDiv = document.getElementById('efficiencyVsKGraph');
+
+
+        // --- Global State Variables ---
+        let insulatorCalculatedVoltages = []; // Array of calculated voltages for each disc
+        let insulatorCalculatedEfficiency = 0; // Calculated string efficiency
+        let discPuncturedStatus = {}; // Stores { discIndex: isPunctured } for current simulation
+        let currentEditedDiscIndex = null; // The index of the disc currently being edited in the modal
+        let faultTimeoutId = null; // Timeout ID for fault visualization animation
+        let isVoltageFlowAnimationEnabled = false; // Flag for voltage flow animation
+
+        let experimentHistory = []; // History for insulator experiments
+        let experimentIdCounter = 0; // Counter for unique experiment IDs
+
+        let isVoiceInstructionsEnabled = true; // Default to enabled
+        const toggleVoiceInstructionsBtn = document.getElementById('toggleVoiceInstructionsBtn');
+
+        // --- Default Values for Simulations ---
+        const insulatorDefaultParams = {
+            numDiscs: 5,
+            totalVoltage: 100,
+            cs: 0.5,
+            cm: 1.0,
+            insulatorMaterial: 'porcelain',
+            pollutionLevel: 'none',
+            humidity: 50,
+            faultVoltage: 0,
+            faultDuration: 0,
+            faultyDiscIndex: 0
+        };
+
+        // Material properties influencing capacitance and efficiency for insulator simulation
+        const materialProperties = {
+            porcelain: { cm_mult: 1.0, cs_mult: 1.0, base_efficiency_impact: 0 },
+            glass: { cm_mult: 1.1, cs_mult: 0.9, base_efficiency_impact: 2 }, // Slightly better efficiency due to lower Cs
+            composite: { cm_mult: 0.9, cs_mult: 0.8, base_efficiency_impact: 5 } // Best efficiency due to lower Cs
+        };
+
+        // --- Helper Functions ---
+
+        /**
+         * Displays a custom alert modal with a given message.
+         * @param {string} message - The message to display in the alert.
+         */
+        function showAlert(message) {
+            customAlertMessage.textContent = message;
+            customAlertModal.style.display = 'flex'; // Use flex to center the modal
+        }
+
+        /**
+         * Displays a custom confirmation modal with a message and a callback for 'Yes'.
+         * @param {string} message - The confirmation message.
+         * @param {function} onConfirmCallback - Function to execute if 'Yes' is clicked.
+         */
+        function showConfirm(message, onConfirmCallback) {
+            customConfirmMessage.textContent = message;
+            confirmYesBtn.onclick = () => {
+                onConfirmCallback();
+                customConfirmModal.style.display = 'none';
+            };
+            customConfirmModal.style.display = 'flex';
+        }
+
+        /** Shows the loading overlay. */
+        function showLoading() {
+            loadingOverlay.classList.remove('hidden');
+        }
+
+        /** Hides the loading overlay. */
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+        }
+
+        // --- Voice Instruction Functions ---
+        /**
+         * Speaks the given text using the Web Speech API.
+         * @param {string} text - The text to speak.
+         */
+        function speak(text) {
+            if (!isVoiceInstructionsEnabled || !('speechSynthesis' in window)) {
+                return; // Do nothing if voice instructions are disabled or not supported
+            }
+            // Stop any ongoing speech before starting a new one
+            window.speechSynthesis.cancel(); 
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US'; // Set language
+            utterance.rate = 1.0; // Speed (0.1 to 10)
+            utterance.pitch = 1.0; // Pitch (0 to 2)
+            window.speechSynthesis.speak(utterance);
+        }
+
+        /** Toggles voice instructions on/off. */
+        function toggleVoiceInstructions() {
+            isVoiceInstructionsEnabled = !isVoiceInstructionsEnabled;
+            if (isVoiceInstructionsEnabled) {
+                toggleVoiceInstructionsBtn.textContent = '🔊 Disable Voice Instructions';
+                speak("Voice instructions enabled.");
+            } else {
+                window.speechSynthesis.cancel(); // Stop any ongoing speech
+                toggleVoiceInstructionsBtn.textContent = '🔇 Enable Voice Instructions';
+            }
+            localStorage.setItem('isVoiceInstructionsEnabled_insulator', isVoiceInstructionsEnabled); // Save preference
+        }
+
+        /** Loads voice instruction preference from local storage. */
+        function loadVoiceInstructionPreference() {
+            const storedPreference = localStorage.getItem('isVoiceInstructionsEnabled_insulator');
+            if (storedPreference !== null) {
+                isVoiceInstructionsEnabled = JSON.parse(storedPreference);
+            }
+            toggleVoiceInstructionsBtn.textContent = isVoiceInstructionsEnabled ? '🔊 Disable Voice Instructions' : '🔇 Enable Voice Instructions';
+        }
+
+        // --- Insulator Simulation Logic ---
+
+        /** Resets all Insulator simulation input parameters to their default values. */
+        function resetInsulatorInputParameters() {
+            insulatorNumDiscsInput.value = insulatorDefaultParams.numDiscs;
+            insulatorTotalVoltageInput.value = insulatorDefaultParams.totalVoltage;
+            insulatorCsInput.value = insulatorDefaultParams.cs;
+            insulatorCmInput.value = insulatorDefaultParams.cm;
+            insulatorMaterialSelect.value = insulatorDefaultParams.insulatorMaterial;
+            pollutionLevelSelect.value = insulatorDefaultParams.pollutionLevel;
+            humidityInput.value = insulatorDefaultParams.humidity;
+            modalFaultVoltageInput.value = insulatorDefaultParams.faultVoltage;
+            modalFaultDurationInput.value = insulatorDefaultParams.faultDuration;
+            modalFaultyDiscIndexInput.value = insulatorDefaultParams.faultyDiscIndex;
+            discPuncturedStatus = {}; // Clear any custom punctured status
+            isVoltageFlowAnimationEnabled = false; // Reset animation state
+            toggleVoltageFlowBtn.textContent = '⚡ Toggle Voltage Flow'; // Reset button text
+            clearFaultVisual(); // Clear any active fault visualization
+            designModeContent.classList.add('hidden'); // Hide design mode section
+            toggleDesignModeBtn.textContent = '⚙️ Design Mode'; // Reset design mode button text
+            designModeResult.textContent = ''; // Clear design mode result
+            speak("Insulator parameters reset to default values.");
+        }
+
+        /**
+         * Calculates the voltage distribution across insulator discs and string efficiency.
+         * Renders the insulator string visualization and updates the chart.
+         */
+        function calculateInsulatorVoltageDistribution() {
+            const n = parseInt(insulatorNumDiscsInput.value);
+            const V_total = parseFloat(insulatorTotalVoltageInput.value);
+            const Cs = parseFloat(insulatorCsInput.value);
+            const Cm = parseFloat(insulatorCmInput.value);
+            const insulatorMaterial = insulatorMaterialSelect.value;
+            const pollutionLevel = pollutionLevelSelect.value;
+            const humidity = parseFloat(humidityInput.value);
+            const faultVoltage = parseFloat(modalFaultVoltageInput.value);
+            const faultDuration = parseFloat(modalFaultDurationInput.value);
+            const faultyDiscIndex = parseInt(modalFaultyDiscIndexInput.value);
+
+            // Basic input validation
+            if (isNaN(n) || n <= 0 || isNaN(V_total) || V_total <= 0 || isNaN(Cs) || Cs < 0 || isNaN(Cm) || Cm <= 0) {
+                showAlert("Please enter valid positive values for all insulator parameters.");
+                speak("Please enter valid positive values for all insulator parameters.");
+                insulatorCalculatedVoltages = [];
+                insulatorCalculatedEfficiency = 0;
+                renderInsulatorString();
+                plotInsulatorVoltageDistribution();
+                insulatorEfficiencyDisplay.textContent = `String Efficiency: N/A`;
+                return;
+            }
+
+            // Calculate disc voltages and string efficiency
+            insulatorCalculatedVoltages = calculateInsulatorDiscVoltages(n, V_total, Cs, Cm, discPuncturedStatus);
+            insulatorCalculatedEfficiency = calculateInsulatorStringEfficiency(
+                insulatorCalculatedVoltages, V_total, n,
+                pollutionLevel, humidity, insulatorMaterial, discPuncturedStatus
+            );
+
+            // Update UI elements
+            renderInsulatorString();
+            plotInsulatorVoltageDistribution();
+            insulatorEfficiencyDisplay.textContent = `String Efficiency: ${insulatorCalculatedEfficiency.toFixed(2)}%`;
+
+            // Apply fault visualization if configured
+            if (faultVoltage > 0 && faultDuration > 0 && faultyDiscIndex > 0 && faultyDiscIndex <= n) {
+                applyFaultVisual(faultyDiscIndex, faultDuration);
+            } else {
+                clearFaultVisual(); // Clear fault if parameters are invalid or zero
+            }
+
+            // Log experiment automatically after calculation
+            logExperiment('insulator', {
+                n: n, V: V_total, Cs: Cs, Cm: Cm, insulatorMaterial: insulatorMaterial,
+                pollutionLevel: pollutionLevel, humidity: humidity,
+                faultVoltage: faultVoltage, faultDuration: faultDuration, faultyDiscIndex: faultyDiscIndex
+            }, {
+                voltages: insulatorCalculatedVoltages.map(v => parseFloat(v.toFixed(2))), // Store rounded voltages
+                efficiency: insulatorCalculatedEfficiency,
+                maxDiscVoltage: insulatorCalculatedVoltages.length > 0 ? parseFloat(Math.max(...insulatorCalculatedVoltages).toFixed(2)) : 0,
+                discPuncturedStatus: JSON.parse(JSON.stringify(discPuncturedStatus)) // Deep copy
+            }, "(Auto-logged Insulator run)");
+        }
+
+        /**
+         * Calculates the voltage across each disc in an insulator string.
+         * Formula based on the provided theory.
+         * @param {number} n - Number of discs.
+         * @param {number} V_total - Total voltage across the string.
+         * @param {number} Cs - Stray capacitance.
+         * @param {number} Cm - Mutual capacitance.
+         * @param {object} puncturedStatus - Object indicating which discs are punctured.
+         * @returns {Array<number>} Array of voltages for each disc (from line end to tower end).
+         */
+        function calculateInsulatorDiscVoltages(n, V_total, Cs, Cm, puncturedStatus = {}) {
+            const activeDiscs = [];
+            for (let i = 1; i <= n; i++) {
+                if (!puncturedStatus[i]) {
+                    activeDiscs.push(i); // Collect indices of non-punctured discs
+                }
+            }
+
+            if (activeDiscs.length === 0) return Array(n).fill(0); // If all discs are punctured, all voltages are 0
+
+            const k = Cm !== 0 ? Cs / Cm : Infinity; // Capacitance ratio alpha (k)
+            let voltages = Array(n).fill(0); // Initialize all voltages to 0
+
+            // Calculate the denominator for the general formula
+            let denominator = 0;
+            for (let j = 0; j < activeDiscs.length; j++) {
+                // The formula for V_i is for the i-th disc from the line end.
+                // In our array, index 0 is the (activeDiscs.length)-th disc in the formula's sequence.
+                // The power is (activeDiscs.length - 1 - j) for the j-th active disc (0-indexed)
+                denominator += Math.pow(1 + k, j);
+            }
+
+            if (V_total === 0 || denominator === 0) {
+                return voltages; // Avoid division by zero or return 0 if total voltage is 0
+            }
+
+            let activeDiscVoltages = [];
+            for (let i = 0; i < activeDiscs.length; i++) {
+                // Calculate voltage for each active disc
+                const V_i_active = V_total * (Math.pow(1 + k, activeDiscs.length - 1 - i) / denominator);
+                activeDiscVoltages.push(V_i_active);
+            }
+
+            let activeDiscCounter = 0;
+            // Populate the full voltages array, respecting punctured discs
+            for (let i = 0; i < n; i++) {
+                const currentDiscIndex = i + 1; // 1-based index for discs
+                if (!puncturedStatus[currentDiscIndex]) {
+                    voltages[i] = activeDiscVoltages[activeDiscCounter];
+                    activeDiscCounter++;
+                } else {
+                    voltages[i] = 0; // Punctured discs have 0 voltage across them
+                }
+            }
+            return voltages;
+        }
+
+        /**
+         * Calculates the string efficiency of an insulator string.
+         * @param {Array<number>} voltages_line_to_tower - Array of voltages for each disc (from line end to tower end).
+         * @param {number} V_total - Total voltage across the string.
+         * @param {number} n - Number of discs.
+         * @param {string} pollutionLevel - Level of pollution ('none', 'light', 'medium', 'heavy').
+         * @param {number} humidity - Humidity percentage.
+         * @param {string} material - Insulator material ('porcelain', 'glass', 'composite').
+         * @param {object} puncturedStatus - Object indicating which discs are punctured.
+         * @returns {number} The calculated string efficiency in percentage.
+         */
+        function calculateInsulatorStringEfficiency(voltages_line_to_tower, V_total, n, pollutionLevel, humidity, material, puncturedStatus = {}) {
+            if (!voltages_line_to_tower || voltages_line_to_tower.length === 0 || n === 0) return 0;
+
+            // Filter out voltages for punctured discs to find max voltage on a healthy disc
+            const healthyVoltages = [];
+            for (let i = 0; i < n; i++) {
+                const discIndex = i + 1;
+                if (!puncturedStatus[discIndex]) {
+                    healthyVoltages.push(voltages_line_to_tower[i]);
+                }
+            }
+
+            if (healthyVoltages.length === 0) return 0; // If all healthy discs have 0 voltage, efficiency is 0
+
+            const V_disc_max = healthyVoltages[0]; // Max voltage is typically on the disc closest to the line (index 0)
+            if (V_disc_max === 0) return (V_total === 0 && n > 0) ? 100 : 0; // If V_total is 0, efficiency is 100% theoretically
+
+            let efficiency = (V_total / (n * V_disc_max)) * 100;
+
+            // Adjust efficiency based on environmental factors (pollution, humidity)
+            let efficiencyReduction = 0;
+            if (pollutionLevel === 'light') efficiencyReduction += 1;
+            else if (pollutionLevel === 'medium') efficiencyReduction += 3;
+            else if (pollutionLevel === 'heavy') efficiencyReduction += 7;
+
+            if (humidity > 70) efficiencyReduction += (humidity - 70) * 0.1; // Small reduction for high humidity
+
+            // Adjust efficiency based on insulator material properties
+            const materialEffect = materialProperties[material] ? materialProperties[material].base_efficiency_impact : 0;
+            efficiency += materialEffect;
+
+            // Ensure efficiency is within 0-100% range
+            efficiency = Math.max(0, efficiency - efficiencyReduction);
+            efficiency = Math.min(100, efficiency);
+
+            return parseFloat(efficiency.toFixed(2));
+        }
+
+        /** Renders the visual representation of the insulator string and updates the current run data table. */
+        function renderInsulatorString() {
+            insulatorStringDiv.innerHTML = ''; // Clear previous discs
+            currentRunDataTableBody.innerHTML = ''; // Clear previous table rows
+
+            const n = parseInt(insulatorNumDiscsInput.value);
+            const V = parseFloat(insulatorTotalVoltageInput.value);
+            
+            // Use a copy of calculated voltages to avoid modifying the original array during rendering
+            const displayVoltages = [...insulatorCalculatedVoltages];
+
+            // Determine max healthy voltage for animation speed calculation
+            const healthyVoltagesForMax = insulatorCalculatedVoltages.filter((v, idx) => !discPuncturedStatus[idx + 1]);
+            const maxHealthyVoltage = healthyVoltagesForMax.length > 0 ? Math.max(...healthyVoltagesForMax) : 1;
+            const baseAnimationDuration = 2; // Base duration in seconds
+
+            // Render discs from line end (bottom) to tower end (top)
+            for (let i = n - 1; i >= 0; i--) {
+                const disc = document.createElement('div');
+                disc.className = 'disc';
+                const currentDiscNumberFromLineEnd = i + 1; // 1-based index from the line end
+                
+                disc.setAttribute('data-disc-index', currentDiscNumberFromLineEnd);
+                disc.addEventListener('click', openDiscPropertiesModal); // Make discs clickable
+
+                const faultVoltage = parseFloat(modalFaultVoltageInput.value);
+                const faultDuration = parseFloat(modalFaultDurationInput.value);
+                const faultyDiscIndex = parseInt(modalFaultyDiscIndexInput.value);
+
+                // Apply fault styling if this disc is the faulty one
+                if (faultyDiscIndex === currentDiscNumberFromLineEnd && faultVoltage > 0) {
+                    disc.classList.add('faulty');
+                }
+                // Apply punctured styling if this disc is punctured
+                if (discPuncturedStatus[currentDiscNumberFromLineEnd]) {
+                    disc.classList.add('punctured');
+                }
+
+                const v_disc = displayVoltages[i]; // Voltage for this specific disc
+                
+                // Dynamic color based on voltage stress (higher voltage = more red/orange, lower = more blue)
+                // Normalized voltage helps scale the color gradient
+                const normalizedVoltage = (v_disc / V) * 1.5; // Scale factor to make color range more visible
+                const hue = 240 - (normalizedVoltage * 120); // Blue (240) to Red (0)
+                const saturation = 100;
+                const lightness = 40 + (normalizedVoltage * 30); // Adjust lightness for contrast
+
+                // Apply dynamic background color unless it's faulty or punctured
+                if (!disc.classList.contains('punctured') && !disc.classList.contains('faulty')) {
+                    disc.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                    disc.style.borderColor = `hsl(${hue}, ${saturation}%, ${lightness - 10}%)`;
+                    disc.style.color = (lightness < 50) ? 'white' : '#333'; // Ensure text color contrasts with background
+                }
+
+                // Apply voltage flow animation if enabled
+                if (isVoltageFlowAnimationEnabled && !disc.classList.contains('faulty') && !disc.classList.contains('punctured')) {
+                    disc.classList.add('voltage-flow-active');
+                    // Animation speed is inversely proportional to voltage (higher voltage = faster pulse)
+                    const animationDuration = (v_disc > 0 && maxHealthyVoltage > 0) ? 
+                                               (baseAnimationDuration * (maxHealthyVoltage / v_disc)) : 
+                                               (baseAnimationDuration * 2); // Slower if voltage is very low or zero
+                    disc.style.animationDuration = `${animationDuration}s`;
+                } else {
+                    disc.classList.remove('voltage-flow-active');
+                    disc.style.animationDuration = ''; // Remove animation duration if not active
+                }
+
+                // Set disc text and title
+                disc.innerHTML = `${v_disc.toFixed(1)}<br><span class="unit">kV</span>`;
+                disc.title = `Disc ${currentDiscNumberFromLineEnd} (from line)\nVoltage: ${v_disc.toFixed(2)} kV\n${((v_disc / V) * 100).toFixed(1)}% of total`;
+                insulatorStringDiv.appendChild(disc);
+
+                // Add connectors between discs (except for the last disc)
+                if (i > 0) {
+                    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                    svg.setAttribute("class", "connector-svg");
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    // SVG path for a simple connector line
+                    path.setAttribute("d", "M0 45 C 10 35, 10 55, 20 45");
+                    path.setAttribute("class", "connector-path");
+                    svg.appendChild(path);
+                    insulatorStringDiv.appendChild(svg);
+                }
+
+                // Populate current run data table
+                const row = currentRunDataTableBody.insertRow(0); // Insert at top to show line-end disc first
+                row.insertCell().textContent = currentDiscNumberFromLineEnd;
+                row.insertCell().textContent = v_disc.toFixed(2);
+                row.insertCell().textContent = discPuncturedStatus[currentDiscNumberFromLineEnd] ? 'Punctured' : 'Healthy';
+            }
+        }
+
+        /** Renders the bar chart for insulator voltage distribution using Plotly. */
+        function plotInsulatorVoltageDistribution() {
+            // Labels for X-axis (Disc 1, Disc 2, etc.)
+            const labels = Array.from({ length: insulatorCalculatedVoltages.length }, (_, i) => `Disc ${i + 1}`);
+            const data = [{
+                x: labels,
+                y: insulatorCalculatedVoltages,
+                type: 'bar',
+                name: `Voltage (kV) for Insulator String`,
+                marker: { color: '#3498db' } // Blue color for bars
+            }];
+            const layout = {
+                title: {
+                    text: `Voltage Distribution Across Insulator String`,
+                    font: { color: '#1a202c' }
+                },
+                xaxis: {
+                    title: 'Disc Number (from Line End)',
+                    tickfont: { color: '#1a202c' },
+                    gridcolor: '#e2e8f0',
+                    linecolor: '#e2e8f0',
+                },
+                yaxis: {
+                    title: 'Voltage (kV)',
+                    rangemode: 'tozero', // Start y-axis from zero
+                    tickfont: { color: '#1a202c' },
+                    gridcolor: '#e2e8f0',
+                    linecolor: '#e2e8f0',
+                },
+                height: 350,
+                margin: { t: 40, b: 40, l: 40, r: 20 },
+                plot_bgcolor: '#ffffff',
+                paper_bgcolor: '#ffffff',
+                responsive: true
+            };
+            Plotly.newPlot(insulatorVoltageChartDiv, data, layout, { responsive: true });
+        }
+
+        /**
+         * Applies a visual fault indicator to a specific insulator disc.
+         * @param {number} discIndex - The 1-based index of the disc to mark as faulty.
+         * @param {number} duration - The duration in milliseconds for the fault visualization.
+         */
+        function applyFaultVisual(discIndex, duration) {
+            clearFaultVisual(); // Clear any existing fault visual first
+
+            const discs = document.querySelectorAll('#insulator-string .disc');
+            // Discs are rendered from n-1 to 0, so index 'discIndex' from line end corresponds to (n - discIndex) in the array
+            const targetDiscElement = discs[discs.length - discIndex];
+
+            if (targetDiscElement) {
+                targetDiscElement.classList.add('faulty');
+                // Set a timeout to remove the fault visual after the specified duration
+                faultTimeoutId = setTimeout(() => {
+                    clearFaultVisual();
+                }, duration);
+            }
+        }
+
+        /** Clears any active fault visualization on the insulator string. */
+        function clearFaultVisual() {
+            const faultyDiscs = document.querySelectorAll('#insulator-string .disc.faulty');
+            faultyDiscs.forEach(disc => disc.classList.remove('faulty'));
+            if (faultTimeoutId) {
+                clearTimeout(faultTimeoutId);
+                faultTimeoutId = null;
+            }
+        }
+
+        /** Opens the modal to edit properties of a specific insulator disc. */
+        function openDiscPropertiesModal(event) {
+            const discElement = event.currentTarget;
+            const discIndex = parseInt(discElement.getAttribute('data-disc-index'));
+            currentEditedDiscIndex = discIndex; // Store the index of the disc being edited
+
+            // Recalculate voltages to ensure fresh data for the modal
+            const n = parseInt(insulatorNumDiscsInput.value);
+            const V = parseFloat(insulatorTotalVoltageInput.value);
+            const Cs = parseFloat(insulatorCsInput.value);
+            const Cm = parseFloat(insulatorCmInput.value);
+            const voltages = calculateInsulatorDiscVoltages(n, V, Cs, Cm, discPuncturedStatus);
+            const discVoltage = voltages[discIndex - 1]; // Get voltage for the selected disc
+
+            modalDiscIndexSpan.textContent = discIndex;
+            modalDiscVoltageSpan.textContent = discVoltage.toFixed(2);
+            isPuncturedCheckbox.checked = !!discPuncturedStatus[discIndex]; // Set checkbox based on current status
+
+            discPropertiesModal.style.display = 'flex'; // Show the modal
+            speak(`Disc ${discIndex} properties. Current voltage is ${discVoltage.toFixed(1)} kilovolts. Check the box to mark as punctured.`);
+        }
+
+        /** Saves the changes made in the disc properties modal and re-calculates/renders. */
+        function saveDiscProperties() {
+            if (currentEditedDiscIndex === null) return;
+
+            const isPunctured = isPuncturedCheckbox.checked;
+            
+            if (isPunctured) {
+                discPuncturedStatus[currentEditedDiscIndex] = true; // Mark disc as punctured
+                speak(`Disc ${currentEditedDiscIndex} marked as punctured.`);
+            } else {
+                delete discPuncturedStatus[currentEditedDiscIndex]; // Remove punctured status
+                speak(`Disc ${currentEditedDiscIndex} marked as healthy.`);
+            }
+
+            discPropertiesModal.style.display = 'none'; // Hide the modal
+            currentEditedDiscIndex = null; // Clear the edited disc index
+            calculateInsulatorVoltageDistribution(); // Re-calculate and re-render the string
+        }
+
+        /** Toggles the voltage flow animation on the insulator discs. */
+        function toggleVoltageFlowAnimation() {
+            isVoltageFlowAnimationEnabled = !isVoltageFlowAnimationEnabled;
+            calculateInsulatorVoltageDistribution(); // Re-render to apply/remove animation classes
+            toggleVoltageFlowBtn.textContent = isVoltageFlowAnimationEnabled ? '⚡ Hide Voltage Flow' : '⚡ Toggle Voltage Flow';
+            if (isVoltageFlowAnimationEnabled) {
+                speak("Voltage flow animation enabled.");
+            } else {
+                speak("Voltage flow animation disabled.");
+            }
+        }
+
+        /** Opens the modal for advanced fault settings. */
+        function openFaultSettingsModal() {
+            // Populate modal inputs with current (or default) fault settings
+            modalFaultVoltageInput.value = parseFloat(insulatorDefaultParams.faultVoltage);
+            modalFaultDurationInput.value = parseFloat(insulatorDefaultParams.faultDuration);
+            modalFaultyDiscIndexInput.value = parseInt(insulatorDefaultParams.faultyDiscIndex);
+            
+            // Set max value for faulty disc index based on current number of discs
+            modalFaultyDiscIndexInput.max = parseInt(insulatorNumDiscsInput.value);
+
+            faultSettingsModal.style.display = 'flex'; // Show the modal
+            speak("Advanced fault settings. You can set fault voltage, duration, and specify a faulty disc index.");
+        }
+
+        /** Saves the fault settings from the modal. */
+        function saveFaultSettings() {
+            // Update default parameters with new fault settings
+            insulatorDefaultParams.faultVoltage = parseFloat(modalFaultVoltageInput.value);
+            insulatorDefaultParams.faultDuration = parseFloat(modalFaultDurationInput.value);
+            insulatorDefaultParams.faultyDiscIndex = parseInt(modalFaultyDiscIndexInput.value);
+
+            faultSettingsModal.style.display = 'none'; // Hide the modal
+            showAlert("Fault settings saved. These will apply to the next insulator experiment run.");
+            speak("Fault settings saved. These will apply to the next insulator experiment run.");
+        }
+
+        /** Toggles the visibility of the design mode section. */
+        function toggleDesignMode() {
+            designModeContent.classList.toggle('hidden');
+            toggleDesignModeBtn.textContent = designModeContent.classList.contains('hidden') ? '⚙️ Design Mode' : '⚙️ Hide Design Mode';
+            designModeResult.textContent = ''; // Clear previous result when toggling
+            if (!designModeContent.classList.contains('hidden')) {
+                speak("Design mode activated. Enter target system voltage and maximum voltage per disc to calculate suggested number of discs.");
+            } else {
+                speak("Design mode deactivated.");
+            }
+        }
+
+        /** Calculates and suggests the minimum number of discs needed for a target system voltage. */
+        function calculateRequiredDiscs() {
+            const targetV = parseFloat(targetSystemVoltageInput.value);
+            const maxVPerDisc = parseFloat(maxVoltagePerDiscInput.value);
+
+            if (isNaN(targetV) || isNaN(maxVPerDisc) || targetV <= 0 || maxVPerDisc <= 0) {
+                designModeResult.textContent = "Please enter valid positive numbers for target voltages.";
+                designModeResult.style.color = '#e74c3c'; // Red for error
+                speak("Please enter valid positive numbers for target voltages.");
+                return;
+            }
+
+            const requiredDiscs = Math.ceil(targetV / maxVPerDisc); // Calculate minimum discs
+            designModeResult.textContent = `Suggested Minimum Discs: ${requiredDiscs} (for ~${maxVPerDisc.toFixed(1)} kV per disc)`;
+            designModeResult.style.color = '#27ae60'; // Green for success
+            speak(`Suggested minimum discs: ${requiredDiscs}.`);
+        }
+
+        /** Updates capacitance values based on the selected insulator material. */
+        function updateCapacitanceBasedOnMaterial() {
+            const selectedMaterial = insulatorMaterialSelect.value;
+            const props = materialProperties[selectedMaterial];
+            if (props) {
+                // Adjust Cm and Cs based on material multipliers
+                insulatorCmInput.value = (insulatorDefaultParams.cm * props.cm_mult).toFixed(2);
+                insulatorCsInput.value = (insulatorDefaultParams.cs * props.cs_mult).toFixed(2);
+            }
+            calculateInsulatorVoltageDistribution(); // Recalculate with new capacitances
+            speak(`Insulator material changed to ${selectedMaterial}. Capacitance values updated.`);
+        }
+
+        // --- History & Analytics ---
+
+        /** Loads experiment history from local storage. */
+        function loadHistoryFromLocalStorage() {
+            const storedHistory = localStorage.getItem('insulatorExperimentHistory');
+            if (storedHistory) {
+                experimentHistory = JSON.parse(storedHistory);
+                // Find the maximum ID to continue counting
+                const maxId = experimentHistory.reduce((max, entry) => Math.max(max, entry.id), 0);
+                experimentIdCounter = maxId;
+            }
+        }
+
+        /** Saves current experiment history to local storage. */
+        function saveHistoryToLocalStorage() {
+            localStorage.setItem('insulatorExperimentHistory', JSON.stringify(experimentHistory));
+        }
+
+        /**
+         * Logs a new experiment entry into the history.
+         * @param {string} type - Type of experiment ('insulator').
+         * @param {object} params - Parameters used for the experiment.
+         * @param {object} results - Results obtained from the experiment.
+         * @param {string} note - Optional note for the experiment.
+         */
+        function logExperiment(type, params, results, note = "") {
+            experimentIdCounter++; // Increment ID for new entry
+            const newEntry = {
+                id: experimentIdCounter,
+                type: type,
+                timestamp: new Date().toLocaleString(), // Current date and time
+                params: params,
+                results: results,
+                note: note
+            };
+            experimentHistory.push(newEntry);
+            saveHistoryToLocalStorage(); // Save to local storage
+            updateHistoryTable(); // Refresh history table
+            updateAnalyticsDashboard(); // Refresh analytics charts
+            updatePersonalizedFeedback(); // Update feedback
+        }
+
+        /** Saves the current simulation configuration with a user-provided note. */
+        function saveCurrentConfigWithNote() {
+            let note = historyNoteInput.value.trim();
+            if (!note) {
+                showAlert("Please enter a note before saving.");
+                speak("Please enter a note before saving.");
+                return;
+            }
+
+            if (insulatorCalculatedVoltages.length > 0) {
+                 logExperiment('insulator', {
+                    n: parseInt(insulatorNumDiscsInput.value),
+                    V: parseFloat(insulatorTotalVoltageInput.value),
+                    Cs: parseFloat(insulatorCsInput.value),
+                    Cm: parseFloat(insulatorCmInput.value),
+                    insulatorMaterial: insulatorMaterialSelect.value,
+                    pollutionLevel: pollutionLevelSelect.value,
+                    humidity: parseFloat(humidityInput.value),
+                    faultVoltage: parseFloat(modalFaultVoltageInput.value),
+                    faultDuration: parseFloat(modalFaultDurationInput.value),
+                    faultyDiscIndex: parseInt(modalFaultyDiscIndexInput.value)
+                }, {
+                    voltages: insulatorCalculatedVoltages.map(v => parseFloat(v.toFixed(2))),
+                    efficiency: insulatorCalculatedEfficiency,
+                    maxDiscVoltage: insulatorCalculatedVoltages.length > 0 ? parseFloat(Math.max(...insulatorCalculatedVoltages).toFixed(2)) : 0,
+                    discPuncturedStatus: JSON.parse(JSON.stringify(discPuncturedStatus))
+                }, note);
+            } else {
+                showAlert("No simulation results to save. Please run an experiment first.");
+                speak("No simulation results to save. Please run an experiment first.");
+                return;
+            }
+            historyNoteInput.value = ''; // Clear the note input
+            showAlert("Configuration saved successfully!");
+            speak("Configuration saved successfully!");
+        }
+
+
+        /** Updates the experiment history table with current data. */
+        function updateHistoryTable() {
+            historyTableBody.innerHTML = ''; // Clear existing rows
+            experimentHistory.forEach(entry => {
+                const row = historyTableBody.insertRow();
+                row.insertCell().textContent = entry.id;
+                row.insertCell().textContent = entry.type === 'insulator' ? 'Insulator' : 'Unknown'; // Only insulator for this app
+                row.insertCell().textContent = entry.timestamp;
+
+                // Dynamically populate columns based on experiment type
+                if (entry.type === 'insulator') {
+                    row.insertCell().textContent = entry.params.n; // Num Discs
+                    row.insertCell().textContent = entry.params.V; // Total Voltage
+                    row.insertCell().textContent = entry.params.Cs; // Cs
+                    row.insertCell().textContent = entry.params.Cm; // Cm
+                    const k = entry.params.Cm !== 0 ? (entry.params.Cs / entry.params.Cm).toFixed(3) : 'Infinity';
+                    row.insertCell().textContent = k; // k
+                    row.insertCell().textContent = entry.results.efficiency; // Efficiency
+                    row.insertCell().textContent = entry.results.maxDiscVoltage; // Max Disc V
+                    row.insertCell().textContent = entry.params.insulatorMaterial; // Material
+                    row.insertCell().textContent = entry.params.pollutionLevel; // Pollution
+                    row.insertCell().textContent = entry.params.humidity; // Humidity
+                    row.insertCell().textContent = entry.params.faultVoltage; // FaultV
+                    row.insertCell().textContent = entry.params.faultDuration; // FaultDur
+                    row.insertCell().textContent = entry.params.faultyDiscIndex; // Faulty Disc
+                    const puncturedDiscs = Object.keys(entry.results.discPuncturedStatus || {}).filter(key => entry.results.discPuncturedStatus[key]).join(';');
+                    row.insertCell().textContent = puncturedDiscs || 'None'; // Punctured Discs
+                }
+                
+                row.insertCell().textContent = entry.note; // Experiment note
+
+                // Add action buttons (Delete)
+                const actionsCell = row.insertCell();
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'action-btn-delete px-2 py-1 rounded text-sm';
+                deleteBtn.onclick = () => deleteHistoryEntry(entry.id);
+                actionsCell.appendChild(deleteBtn);
+            });
+        }
+
+        /**
+         * Deletes an experiment entry from the history.
+         * @param {number} id - The ID of the experiment entry to delete.
+         */
+        function deleteHistoryEntry(id) {
+            showConfirm(`Are you sure you want to delete experiment ID ${id}? This cannot be undone.`, () => {
+                experimentHistory = experimentHistory.filter(entry => entry.id !== id);
+                saveHistoryToLocalStorage();
+                updateHistoryTable();
+                updateAnalyticsDashboard();
+                updatePersonalizedFeedback();
+                showAlert(`Experiment ID ${id} deleted.`);
+                speak(`Experiment ID ${id} deleted.`);
+            });
+        }
+
+        /** Clears all experiment history. */
+        function clearAllHistory() {
+            showConfirm("Are you sure you want to clear ALL experiment history? This cannot be undone.", () => {
+                experimentHistory = [];
+                experimentIdCounter = 0; // Reset ID counter
+                saveHistoryToLocalStorage();
+                updateHistoryTable();
+                updateAnalyticsDashboard();
+                updatePersonalizedFeedback();
+                showAlert("All history cleared.");
+                speak("All history cleared.");
+            });
+        }
+
+        /** Exports the experiment history to a CSV file. */
+        function exportHistoryToCSV() {
+            if (experimentHistory.length === 0) {
+                showAlert("No history to export.");
+                speak("No history to export.");
+                return;
+            }
+
+            // Define CSV headers for Insulator experiments
+            const headers = [
+                "ID", "Type", "Timestamp",
+                "Num_Discs", "Total_Voltage_kV", "Cs_nF", "Cm_nF", "k_Cs_per_Cm",
+                "Efficiency_Percent", "Max_Disc_Voltage_kV", "Material", "Pollution_Level", "Humidity_Percent",
+                "Fault_Voltage_kV", "Fault_Duration_ms", "Faulty_Disc_Index", "Punctured_Discs",
+                "Note"
+            ];
+
+            // Map each experiment entry to a CSV row
+            const rows = experimentHistory.map(entry => {
+                let rowData = Array(headers.length).fill(''); // Initialize row with empty strings
+
+                rowData[0] = entry.id;
+                rowData[1] = entry.type;
+                rowData[2] = `"${entry.timestamp}"`; // Enclose timestamp in quotes to handle commas
+
+                if (entry.type === 'insulator') {
+                    rowData[3] = entry.params.n;
+                    rowData[4] = entry.params.V;
+                    rowData[5] = entry.params.Cs;
+                    rowData[6] = entry.params.Cm;
+                    rowData[7] = entry.params.Cm !== 0 ? (entry.params.Cs / entry.params.Cm).toFixed(3) : 'Infinity'; // k
+                    rowData[8] = entry.results.efficiency;
+                    rowData[9] = entry.results.maxDiscVoltage;
+                    rowData[10] = `"${entry.params.insulatorMaterial}"`;
+                    rowData[11] = `"${entry.params.pollutionLevel}"`;
+                    rowData[12] = entry.params.humidity;
+                    rowData[13] = entry.params.faultVoltage;
+                    rowData[14] = entry.params.faultDuration;
+                    rowData[15] = entry.params.faultyDiscIndex;
+                    // Format punctured discs as a string (e.g., "1;3;5")
+                    const puncturedDiscs = Object.keys(entry.results.discPuncturedStatus || {}).filter(key => entry.results.discPuncturedStatus[key]).join(';');
+                    rowData[16] = `"${puncturedDiscs}"`;
+                }
+                rowData[17] = `"${entry.note.replace(/"/g, '""')}"`; // Escape double quotes in notes
+
+                // Join row data, handling commas within data fields by enclosing in quotes
+                return rowData.map(item => (typeof item === 'string' && item.includes(',')) ? `"${item}"` : item).join(',');
+            });
+
+            // Create and trigger download of CSV file
+            const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "insulator_simulation_history.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            speak("Experiment history exported to CSV.");
+        }
+
+        /** Updates charts in the Analytics Dashboard for Insulator simulation. */
+        function updateAnalyticsDashboard() {
+            const commonLayoutProps = {
+                paper_bgcolor: '#ffffff',
+                plot_bgcolor: '#ffffff',
+                font: { color: '#1a202c' },
+                xaxis: { gridcolor: '#e2e8f0', linecolor: '#e2e8f0' },
+                yaxis: { gridcolor: '#e2e8f0', linecolor: '#e2e8f0' },
+                margin: { t: 40, b: 40, l: 50, r: 20 },
+                height: 320, // Consistent height for dashboard charts
+                responsive: true
+            };
+
+            const insulatorExperiments = experimentHistory.filter(e => e.type === 'insulator');
+
+            // Chart 1: String Efficiency Over Experiments
+            const efficiencyOverTimeData = [{
+                x: insulatorExperiments.map(e => e.id), y: insulatorExperiments.map(e => e.results.efficiency),
+                text: insulatorExperiments.map(e => `Eff:${e.results.efficiency}%`),
+                hovertext: insulatorExperiments.map(e => `Run ${e.id}: Eff ${e.results.efficiency}%<br>k=${e.params.Cm !== 0 ? (e.params.Cs / e.params.Cm).toFixed(3) : 'Infinity'}, n=${e.params.n}`),
+                mode: 'lines+markers', type: 'scatter', marker: { size: 8 }
+            }];
+            const layoutEfficiencyOverTime = {
+                title: 'String Efficiency Over Experiments',
+                xaxis: { title: 'Experiment Run ID' }, yaxis: { title: 'String Efficiency (%)', range: [0, 105] },
+                ...commonLayoutProps
+            };
+            Plotly.newPlot(efficiencyOverTimeGraphDiv, efficiencyOverTimeData, layoutEfficiencyOverTime, { responsive: true });
+
+            // Chart 2: String Efficiency vs. k (Cs/Cm)
+            const layoutEfficiencyVsK = {
+                title: 'String Efficiency vs. k (Cs/Cm)',
+                xaxis: { title: 'k (Cs/Cm)' }, yaxis: { title: 'String Efficiency (%)', range: [0, 105] },
+                ...commonLayoutProps
+            };
+            const dataEfficiencyVsK = [{
+                x: insulatorExperiments.map(e => e.params.Cm !== 0 ? e.params.Cs / e.params.Cm : Infinity),
+                y: insulatorExperiments.map(e => e.results.efficiency),
+                text: insulatorExperiments.map(e => `ID:${e.id}`),
+                hovertext: insulatorExperiments.map(e => `Run ${e.id}: ${e.note || 'No note'}<br>n=${e.params.n}, V=${e.params.V}, Cs=${e.params.Cs}, Cm=${e.params.Cm}`),
+                mode: 'markers+text', type: 'scatter', textposition: 'top center',
+                marker: { size: 10, color: insulatorExperiments.map(e => e.results.efficiency), colorscale: 'Viridis', showscale: true }
+            }];
+            Plotly.newPlot(efficiencyVsKGraphDiv, dataEfficiencyVsK, layoutEfficiencyVsK, { responsive: true });
+        }
+
+        /** Provides personalized feedback based on recent experiment history. */
+        function updatePersonalizedFeedback() {
+            if (experimentHistory.length < 3) {
+                personalizedFeedbackEl.textContent = "Complete at least 3 experiments to see personalized feedback.";
+                return;
+            }
+
+            const lastThreeRuns = experimentHistory.slice(-3); // Get the last three experiments
+            let feedback = "Recent Trends:\n";
+
+            // Analyze Insulator-specific trends
+            const insulatorRuns = lastThreeRuns.filter(e => e.type === 'insulator');
+            if (insulatorRuns.length > 0) {
+                const efficiencies = insulatorRuns.map(e => e.results.efficiency);
+                if (efficiencies.length >= 2 && efficiencies[0] < efficiencies[1]) {
+                    feedback += "  - String efficiency is improving! Keep optimizing.\n";
+                } else if (efficiencies.length >= 2 && efficiencies[0] > efficiencies[1]) {
+                    feedback += "  - String efficiency is decreasing. Check k-value or environmental factors.\n";
+                }
+                const kValues = insulatorRuns.map(e => e.params.Cm !== 0 ? e.params.Cs / e.params.Cm : Infinity);
+                if (kValues.some(k => k > 1.5)) {
+                    feedback += "  - High k-values (Cs/Cm) can lead to lower efficiency. Experiment with different materials.\n";
+                }
+            }
+
+            personalizedFeedbackEl.textContent = (feedback === "Recent Trends:\n") ? "No strong simple trends detected in the last 3 experiments." : feedback;
+        }
+
+        // --- Global Actions ---
+
+        /** Takes a screenshot of the currently active tab content. */
+        function takeScreenshot() {
+            showLoading();
+            setTimeout(() => {
+                const activeTabPanel = document.querySelector('.tab-panel.active');
+                if (!activeTabPanel) {
+                    // If no active tab, assume the main content area for this single-tab app
+                    html2canvas(document.querySelector('.container'), {
+                        scale: 1.5, // Increase scale for higher resolution
+                        useCORS: true, // Enable cross-origin image loading (if any)
+                        backgroundColor: '#f4f7f6' // Set background for transparent areas
+                    })
+                    .then(canvas => {
+                        const link = document.createElement('a');
+                        link.download = `insulator_simulation_screenshot.png`;
+                        link.href = canvas.toDataURL(); // Get image data URL
+                        link.click(); // Trigger download
+                        hideLoading();
+                        speak("Screenshot taken successfully.");
+                    }).catch(err => {
+                        console.error("Screenshot failed:", err);
+                        showAlert("Could not take screenshot. Please try again.");
+                        speak("Could not take screenshot. Please try again.");
+                        hideLoading();
+                    });
+                    return;
+                }
+                html2canvas(activeTabPanel, {
+                    scale: 1.5, // Increase scale for higher resolution
+                    useCORS: true, // Enable cross-origin image loading (if any)
+                    backgroundColor: '#f4f7f6' // Set background for transparent areas
+                })
+                .then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `insulator_simulation_screenshot_${activeTabPanel.id}.png`;
+                    link.href = canvas.toDataURL(); // Get image data URL
+                    link.click(); // Trigger download
+                    hideLoading();
+                    speak("Screenshot taken successfully.");
+                }).catch(err => {
+                    console.error("Screenshot failed:", err);
+                    showAlert("Could not take screenshot. Please try again.");
+                    speak("Could not take screenshot. Please try again.");
+                    hideLoading();
+                });
+            }, 100); // Small delay to ensure rendering is complete
+        }
+
+        /** Prints the current view of the page. */
+        function printCurrentView() {
+            window.print();
+            speak("Printing current view.");
+        }
+
+        // --- Tab Navigation Logic (Simplified for single-experiment app) ---
+        function openTab(evt, tabName) {
+            let i, tabcontent, tablinks;
+            // Hide all tab content
+            tabcontent = document.getElementsByClassName("tab-panel");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.add("hidden");
+                tabcontent[i].classList.remove("active");
+            }
+            // Deactivate all tab buttons (if any, though this app uses direct content)
+            tablinks = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+            }
+            // Show the selected tab content
+            document.getElementById(tabName).classList.remove("hidden");
+            document.getElementById(tabName).classList.add("active");
+
+            // Update guidance and speak instructions for the main panel
+            const mainGuidancePanel = document.querySelector('.guidance-panel');
+            const mainTitle = document.getElementById('insulatorStepTitle');
+            const mainInstruction = document.getElementById('insulatorStepInstruction');
+
+            if (tabName === 'insulatorParametersContent') {
+                mainTitle.textContent = "Set Insulator Parameters";
+                mainInstruction.textContent = "Adjust the number of discs, total voltage, and capacitance values. You can also select material, pollution level, and humidity.";
+                speak(mainInstruction.textContent);
+            } else if (tabName === 'insulatorResultsContent') {
+                mainTitle.textContent = "Insulator Results & Analysis";
+                mainInstruction.textContent = "Observe the visual string, disc voltages in the table, and the voltage distribution chart. You can also toggle voltage flow or save your experiment.";
+                speak(mainInstruction.textContent);
+            } else if (tabName === 'experimentHistory') {
+                mainTitle.textContent = "Experiment History";
+                mainInstruction.textContent = "Review your past simulation runs here. You can add notes, export data, or clear history.";
+                speak(mainInstruction.textContent);
+            } else if (tabName === 'analyticsDashboard') {
+                mainTitle.textContent = "Analytics Dashboard";
+                mainInstruction.textContent = "View charts showing trends in string efficiency and its relation to capacitance ratios.";
+                speak(mainInstruction.textContent);
+            }
+
+            // Re-render charts when their tab becomes active
+            if (tabName === 'analyticsDashboard') {
+                setTimeout(updateAnalyticsDashboard, 100);
+            } else if (tabName === 'insulatorResultsContent') {
+                setTimeout(calculateInsulatorVoltageDistribution, 100); // Re-render string and chart
+            }
+        }
+
+
+        // --- Event Listeners Initialization ---
+
+        // Insulator Simulation section event listeners
+        insulatorNumDiscsInput.addEventListener('input', calculateInsulatorVoltageDistribution);
+        insulatorTotalVoltageInput.addEventListener('input', calculateInsulatorVoltageDistribution);
+        insulatorCsInput.addEventListener('input', calculateInsulatorVoltageDistribution);
+        insulatorCmInput.addEventListener('input', calculateInsulatorVoltageDistribution);
+        insulatorMaterialSelect.addEventListener('change', updateCapacitanceBasedOnMaterial); // Change event for material
+        pollutionLevelSelect.addEventListener('change', calculateInsulatorVoltageDistribution);
+        humidityInput.addEventListener('input', calculateInsulatorVoltageDistribution);
+        document.getElementById('insulatorCalculateBtn').addEventListener('click', () => {
+            calculateInsulatorVoltageDistribution();
+            speak("Insulator voltage distribution calculated. Review the results below.");
+            openTab(null, 'insulatorResultsContent'); // Automatically switch to results tab
+        });
+        document.getElementById('insulatorLoadDefaultParamsBtn').addEventListener('click', () => {
+            resetInsulatorInputParameters();
+            calculateInsulatorVoltageDistribution(); // Re-render with defaults
+            speak("Default insulator parameters loaded and calculation performed.");
+        });
+        document.getElementById('insulatorSaveExperimentBtn').addEventListener('click', () => {
+            logExperiment('insulator', {
+                n: parseInt(insulatorNumDiscsInput.value), V: parseFloat(insulatorTotalVoltageInput.value), Cs: parseFloat(insulatorCsInput.value), Cm: parseFloat(insulatorCmInput.value), insulatorMaterial: insulatorMaterialSelect.value, pollutionLevel: pollutionLevelSelect.value, humidity: parseFloat(humidityInput.value), faultVoltage: parseFloat(modalFaultVoltageInput.value), faultDuration: parseFloat(modalFaultDurationInput.value), faultyDiscIndex: parseInt(modalFaultyDiscIndexInput.value)
+            }, {
+                voltages: insulatorCalculatedVoltages.map(v => parseFloat(v.toFixed(2))), efficiency: insulatorCalculatedEfficiency, maxDiscVoltage: insulatorCalculatedVoltages.length > 0 ? parseFloat(Math.max(...insulatorCalculatedVoltages).toFixed(2)) : 0, discPuncturedStatus: JSON.parse(JSON.stringify(discPuncturedStatus))
+            }, "(Manual save Insulator run)");
+            showAlert("Experiment saved to history!");
+            speak("Current experiment saved to history.");
+        });
+
+        // Insulator Design Mode event listeners
+        toggleDesignModeBtn.addEventListener('click', toggleDesignMode);
+        calculateDesignBtn.addEventListener('click', calculateRequiredDiscs);
+
+        // Insulator Fault Settings event listeners
+        openFaultSettingsBtn.addEventListener('click', openFaultSettingsModal);
+        saveFaultSettingsBtn.addEventListener('click', saveFaultSettings);
+        // Update max value for faulty disc index based on current number of discs whenever number of discs changes or modal opens
+        modalFaultyDiscIndexInput.addEventListener('input', () => {
+            modalFaultyDiscIndexInput.max = parseInt(insulatorNumDiscsInput.value);
+            if (parseInt(modalFaultyDiscIndexInput.value) > parseInt(insulatorNumDiscsInput.value)) {
+                modalFaultyDiscIndexInput.value = insulatorNumDiscsInput.value;
+            }
+        });
+        // Live update fault visual when fault parameters are changed in modal
+        modalFaultVoltageInput.addEventListener('input', calculateInsulatorVoltageDistribution);
+        modalFaultDurationInput.addEventListener('input', calculateInsulatorVoltageDistribution);
+        modalFaultyDiscIndexInput.addEventListener('input', calculateInsulatorVoltageDistribution);
+
+        // Insulator Disc Properties modal event listener
+        saveDiscPropertiesBtn.addEventListener('click', saveDiscProperties);
+        
+        // Insulator Voltage Flow Animation event listener
+        toggleVoltageFlowBtn.addEventListener('click', toggleVoltageFlowAnimation);
+
+        // History & Analytics event listeners
+        document.getElementById('saveWithNoteBtn').addEventListener('click', saveCurrentConfigWithNote);
+        document.getElementById('exportCsvBtn').addEventListener('click', exportHistoryToCSV);
+        document.getElementById('clearHistoryBtn').addEventListener('click', clearAllHistory);
+
+        // Global Utility Buttons event listeners
+        document.getElementById('screenshotBtnGlobal').addEventListener('click', takeScreenshot);
+        document.getElementById('printBtnGlobal').addEventListener('click', printCurrentView);
+        document.getElementById('toggleVoiceInstructionsBtn').addEventListener('click', toggleVoiceInstructions);
+
+        // Tab navigation buttons (manually added as there's no tab bar in this simplified version)
+        document.body.insertAdjacentHTML('afterbegin', `
+            <div class="flex justify-center border-b border-gray-300 mb-6 flex-wrap w-full max-w-5xl">
+                <button class="tab-button px-4 py-2 text-lg font-medium text-gray-700 hover:text-blue-600 transition duration-300 ease-in-out active" onclick="openTab(event, 'insulatorParametersContent')">Parameters</button>
+                <button class="tab-button px-4 py-2 text-lg font-medium text-gray-700 hover:text-blue-600 transition duration-300 ease-in-out" onclick="openTab(event, 'insulatorResultsContent')">Results</button>
+                <button class="tab-button px-4 py-2 text-lg font-medium text-gray-700 hover:text-blue-600 transition duration-300 ease-in-out" onclick="openTab(event, 'experimentHistory')">History</button>
+                <button class="tab-button px-4 py-2 text-lg font-medium text-gray-700 hover:text-blue-600 transition duration-300 ease-in-out" onclick="openTab(event, 'analyticsDashboard')">Analytics</button>
+            </div>
+        `);
+
+
+        // Initial setup on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadVoiceInstructionPreference(); // Load voice preference first
+            loadHistoryFromLocalStorage(); // Load past experiments
+            updateHistoryTable(); // Populate history table
+            updateAnalyticsDashboard(); // Render analytics charts
+            updatePersonalizedFeedback(); // Generate personalized feedback
+            calculateInsulatorVoltageDistribution(); // Perform initial calculation and rendering
+            openTab(null, 'insulatorParametersContent'); // Open parameters tab by default
+        });
+    </script>
+</body>
+</html>
