@@ -4,6 +4,9 @@ In high-voltage transmission systems, suspension insulators are employed to supp
 In an ideal scenario, the voltage would distribute uniformly across each disc in the insulator string. However, due to the presence of shunt capacitance (capacitance between each metal fitting and the grounded tower) and self-capacitance (capacitance between the metal fittings of each disc), the voltage distribution becomes non-uniform. The disc nearest to the conductor experiences the highest voltage stress, while the voltage across each subsequent disc decreases progressively towards the tower.
 
 2.⚙️Non-Uniform Voltage Distribution
+
+
+
 The presence of shunt capacitance causes the voltage to distribute unevenly, with the disc nearest to the conductor experiencing the highest voltage stress.
 Ideally, the voltage across each disc in the insulator string would be equal, resulting in uniform stress distribution. However, in practice, the voltage distribution is non-uniform due to the presence of:
 
@@ -13,7 +16,9 @@ Ideally, the voltage across each disc in the insulator string would be equal, re
 As we move towards the tower, each subsequent disc experiences less voltage. This non-uniform distribution can lead to over-stressing of the lower discs, increasing the risk of flashover and insulator failure.
 
 3.🔍String Efficiency
+
 String efficiency is a measure of the uniformity of voltage distribution across the insulator string.
+
 String Efficiency (%) = (Total Voltage / (n × Voltage across lowest disc)) × 100
 Where:
 
