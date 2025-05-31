@@ -2,7 +2,7 @@
 ### Subject Matter Experts
 | SNo. | Name | Email | Institute | ID |
 | :---: | :---: | :---: | :---: | :---: |
-| 1 | name | email | institute | id |
+| 1 | Rajeev Baghel | rajeev@reck.ac.in | REC kannauj | id |
 
 ### Developers
 | SNo. | Name | Email | Institute | ID |
