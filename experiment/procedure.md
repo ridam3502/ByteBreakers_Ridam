@@ -39,8 +39,8 @@ Change capacitance ratio (α)
 
 Observe how voltage distribution and string efficiency change
 
-6. Results and Graphs
-7. 
+step 6 . Results and Graphs
+ 
 Table of Voltage Across Each Disc
 
 Plot: Voltage vs. Disc Number
@@ -50,7 +50,7 @@ String Efficiency Value
 Compare simulation and experimental values.
 
 7. Conclusion
-8. 
+ 
 Discuss:
 
 Non-uniform voltage distribution
@@ -62,7 +62,7 @@ Importance of grading rings
 Efficiency improvements using different methods
 
 *Repeat with Different Parameters:** Change α or number of discs to study its effect on voltage distribution.
-9. **Analyze Results:** Note how voltage uniformity and string efficiency improve with various configuration
+**Analyze Results:** Note how voltage uniformity and string efficiency improve with various configuration
 
 
 
