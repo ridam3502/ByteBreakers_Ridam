@@ -1,6 +1,5 @@
  Theory of Voltage Distribution Across a String of Suspension Insulators
-
-In high-voltage transmission systems, suspension insulators are employed to support conductors and provide necessary insulation from the supporting structures. These insulators are typically arranged in a series of discs, forming what is known as an insulator string.
+1. In high-voltage transmission systems, suspension insulators are employed to support conductors and provide necessary insulation from the supporting structures. These insulators are typically arranged in a series of discs, forming what is known as an insulator string.
 In an ideal scenario, the voltage would distribute uniformly across each disc in the insulator string. However, due to the presence of shunt capacitance (capacitance between each metal fitting and the grounded tower) and self-capacitance (capacitance between the metal fittings of each disc), the voltage distribution becomes non-uniform. The disc nearest to the conductor experiences the highest voltage stress, while the voltage across each subsequent disc decreases progressively towards the tower.
 
 2.Non-Uniform Voltage Distribution
