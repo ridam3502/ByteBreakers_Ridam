@@ -1,9 +1,9 @@
-📘 Theory of Voltage Distribution Across a String of Suspension Insulators
+ Theory of Voltage Distribution Across a String of Suspension Insulators
 
 In high-voltage transmission systems, suspension insulators are employed to support conductors and provide necessary insulation from the supporting structures. These insulators are typically arranged in a series of discs, forming what is known as an insulator string.
 In an ideal scenario, the voltage would distribute uniformly across each disc in the insulator string. However, due to the presence of shunt capacitance (capacitance between each metal fitting and the grounded tower) and self-capacitance (capacitance between the metal fittings of each disc), the voltage distribution becomes non-uniform. The disc nearest to the conductor experiences the highest voltage stress, while the voltage across each subsequent disc decreases progressively towards the tower.
 
-2.⚙️Non-Uniform Voltage Distribution
+2.Non-Uniform Voltage Distribution
 
 
 The presence of shunt capacitance causes the voltage to distribute unevenly, with the disc nearest to the conductor experiencing the highest voltage stress.
@@ -15,7 +15,7 @@ Ideally, the voltage across each disc in the insulator string would be equal, re
 As we move towards the tower, each subsequent disc experiences less voltage. This non-uniform distribution can lead to over-stressing of the lower discs, increasing the risk of flashover and insulator failure.
 
 
-3.🔍String Efficiency
+3. String Efficiency
 
 String efficiency is a measure of the uniformity of voltage distribution across the insulator string.
 
@@ -37,7 +37,7 @@ Frequency (f): Capacitive reactance is  (1/wc )
 While not directly appearing in the ratio K, the frequency of the AC voltage influences the magnitudes of currents, but the ratio of voltages remains dependent on K.
 
 
-4.🧮 Mathematical Analysis
+4.  Mathematical Analysis
 Let:
 
 V = total voltage across the string,
@@ -55,7 +55,7 @@ V_i = V × (1 + α)^(n - i) / Σ[(1 + α)^(n - k)], for k = 1 to n
 This formula shows that voltage across the discs increases exponentially toward the bottom of the string.
 
 
-5.📊Voltage Distribution Characteristics
+5. Voltage Distribution Characteristics
 The bottom-most insulator (disc closest to the conductor) carries the highest voltage.
 
 The top-most disc (near the tower) carries the least voltage.
@@ -93,7 +93,7 @@ Effect: This additional capacitance (Cp)
   draws more charging current through the lower units, thereby increasing the voltage across them and making the distribution more uniform by reducing the voltage on the top units. It essentially "pushes" the voltage distribution more evenly across the string.
 Also serves as arcing horn: During flashover, the arc occurs between the guard ring and the tower, preventing damage to the insulator units themselves.
  
-6.🔶 Improving Voltage Distribution
+6.  Improving Voltage Distribution
 
 Capacitance grading: Use discs with different capacitances
 
@@ -102,7 +102,7 @@ Guard rings: Reduces voltage on lower units
 Increasing creepage distance: Enhances surface insulation
 
 
-7. ✅ Conclusion
+7.  Conclusion
 8. 
 The study of voltage distribution across string insulators is essential for designing reliable high-voltage transmission systems. Due to the non-uniform distribution caused by stray capacitances, the bottom insulators carry disproportionately high voltage, increasing the risk of failure.
 A better understanding of this phenomenon leads to higher string efficiency, increased reliability, and longer lifespan of transmission systems.
